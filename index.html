@@ -931,11 +931,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
     </div>
     <div class="nav-section">
       <div class="nav-label">Main</div>
-      <button class="nav-item active" onclick="navigate('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</button>
-      <button class="nav-item" onclick="navigate('clients',this)"><span class="nav-icon">👥</span> Clients</button>
-      <button class="nav-item" onclick="navigate('statements',this)"><span class="nav-icon">📄</span> Financial Statements</button>
-      <button class="nav-item" onclick="navigate('documents',this)"><span class="nav-icon">📁</span> Documents</button>
-      <button class="nav-item" onclick="navigate('reports',this)"><span class="nav-icon">📈</span> Reports</button>
+      <button class="nav-item active" onclick="mobileNav('dashboard',null);navigate('dashboard',this);closeSidebarMobile()"><span class="nav-icon">📊</span> Dashboard</button>
+      <button class="nav-item" onclick="mobileNav('clients',null);navigate('clients',this);closeSidebarMobile()"><span class="nav-icon">👥</span> Clients</button>
+      <button class="nav-item" onclick="mobileNav('statements',null);navigate('statements',this);closeSidebarMobile()"><span class="nav-icon">📄</span> Financial Statements</button>
+      <button class="nav-item" onclick="mobileNav('documents',null);navigate('documents',this);closeSidebarMobile()"><span class="nav-icon">📁</span> Documents</button>
+      <button class="nav-item" onclick="mobileNav('reports',null);navigate('reports',this);closeSidebarMobile()"><span class="nav-icon">📈</span> Reports</button>
       <div class="nav-label">Account</div>
       <button class="nav-item" onclick="navigate('profile',this)"><span class="nav-icon">👤</span> My Profile</button>
       <button class="nav-item" onclick="navigate('privacy',this)"><span class="nav-icon">🔐</span> Privacy & Security</button>
@@ -956,7 +956,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
   <div class="main">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <button class="menu-toggle" onclick="toggleSidebarMobile()">☰</button>
         <h1 class="page-title" id="topbar-title">Dashboard</h1>
       </div>
       <div class="topbar-right">
@@ -1232,7 +1232,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
       <div class="bni-wrap"><div class="bni">📁</div></div>
       <span>Docs</span>
     </button>
-    <button class="bnav-item" id="bn-more" onclick="toggleSidebar()">
+    <button class="bnav-item" id="bn-more" onclick="toggleSidebarMobile()">
       <div class="bni-wrap"><div class="bni">☰</div></div>
       <span>More</span>
     </button>
@@ -1413,6 +1413,13 @@ async function enterApp() {
   showScreen('screen-app');
   navigate('dashboard', document.querySelector('.nav-item'));
   await refreshDashboard();
+  // Reset bottom nav to dashboard
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const dashBtn = document.getElementById('bn-dashboard');
+  if (dashBtn) dashBtn.classList.add('active');
+  const fab = document.getElementById('fab-btn');
+  if (fab) fab.style.display = 'flex';
+  showInstallBanner();
 }
 
 function handleLogout() {
@@ -2035,84 +2042,85 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function fmt(n) { return new Intl.NumberFormat('en-PK').format(Math.round(n)); }
 
 
-// ── MOBILE NAVIGATION ──
-function mobileNav(page, btn) {
-  navigate(page, null);
+// ── MOBILE NAVIGATION (fixed) ──
+
+// Bottom nav tap handler — called directly from HTML onclick
+function mobileNav(page, btnEl) {
+  // 1. Show correct section
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById('sec-' + page);
+  if (sec) sec.classList.add('active');
+
+  // 2. Update topbar title
+  const titles = {
+    dashboard:'Dashboard', clients:'Clients', statements:'Financial Statements',
+    documents:'Documents', reports:'Reports', profile:'My Profile', privacy:'Privacy & Security'
+  };
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = titles[page] || page;
+
+  // 3. Highlight active bottom tab
   document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
+
+  // 4. Sync sidebar nav highlight
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  // 5. FAB visibility
+  const fab = document.getElementById('fab-btn');
+  if (fab) fab.style.display = (page === 'clients' || page === 'dashboard') ? 'flex' : 'none';
+
+  // 6. Refresh data for the page
+  if (page === 'dashboard') refreshDashboard();
+  if (page === 'clients') loadClients().then(renderClientsTable);
+  if (page === 'reports') { populateReportClientSelect(); loadData('reports',[]).then(renderReportsList); }
+
+  // 7. Close sidebar if open
+  closeSidebarMobile();
 }
 
 function closeSidebarMobile() {
   document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
+  const ov = document.getElementById('sidebar-overlay');
+  if (ov) ov.classList.remove('show');
 }
 
-// Override toggleSidebar to also show overlay
-const _origToggle = toggleSidebar;
-toggleSidebar = function() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('show');
-};
-
-// Show FAB only on clients page
-function updateFAB(page) {
-  const fab = document.getElementById('fab-btn');
-  if (!fab) return;
-  fab.style.display = (page === 'clients' || page === 'dashboard') ? 'flex' : 'none';
+function toggleSidebarMobile() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  if (ov) ov.classList.toggle('show');
 }
 
-// Override navigate to also update bottom nav active state and FAB
-const _origNav = navigate;
-navigate = function(page, btn) {
-  _origNav(page, btn);
-  updateFAB(page);
-  // Sync bottom nav
-  const map = { dashboard:'bn-dashboard', clients:'bn-clients', statements:'bn-statements', documents:'bn-documents' };
-  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
-  const target = map[page];
-  if (target) document.getElementById(target)?.classList.add('active');
-};
+// Replace toggleSidebar used by sidebar hamburger ☰
+function toggleSidebar() { toggleSidebarMobile(); }
 
-// Install banner — show on mobile after 3s if not dismissed
 function showInstallBanner() {
   if (localStorage.getItem('lp_install_dismissed')) return;
-  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const isMobile = window.innerWidth <= 768;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
   if (isMobile && !isStandalone) {
     setTimeout(() => {
-      document.getElementById('install-banner')?.classList.add('show');
-    }, 3000);
+      const b = document.getElementById('install-banner');
+      if (b) b.classList.add('show');
+    }, 4000);
   }
 }
 
 function dismissInstall() {
   localStorage.setItem('lp_install_dismissed', '1');
-  document.getElementById('install-banner')?.classList.remove('show');
+  const b = document.getElementById('install-banner');
+  if (b) b.classList.remove('show');
 }
 
-// Call after login
-const _origEnterApp = enterApp;
-enterApp = async function() {
-  await _origEnterApp();
-  updateFAB('dashboard');
-  showInstallBanner();
-};
-
-// Swipe to close sidebar on mobile
-let touchStartX = 0;
-document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+// Swipe left to close sidebar
+let _touchStartX = 0;
+document.addEventListener('touchstart', e => { _touchStartX = e.touches[0].clientX; }, { passive: true });
 document.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dx = e.changedTouches[0].clientX - _touchStartX;
   const sidebar = document.getElementById('sidebar');
-  if (sidebar.classList.contains('open') && dx < -60) {
-    closeSidebarMobile();
-  }
+  if (sidebar && sidebar.classList.contains('open') && dx < -50) closeSidebarMobile();
 }, { passive: true });
-
-// Prevent double-tap zoom on buttons
-document.querySelectorAll('.btn, .bnav-item, .fab, .vbtn').forEach(el => {
-  el.addEventListener('touchend', e => e.preventDefault(), { passive: false });
-});
 
 // ── INIT ──
 window.addEventListener('load', async () => {
