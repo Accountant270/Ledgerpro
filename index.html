@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LedgerPro — Secure Accountant Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #0f1e36;
+  --navy2: #1a2e4a;
+  --teal: #1D9E75;
+  --teal-light: #E1F5EE;
+  --teal-mid: #0F6E56;
+  --teal-dark: #085041;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --text: #0f1e36;
+  --text2: #4a5568;
+  --text3: #8896a8;
+  --border: #e2e8f0;
+  --page-bg: #f0f4f8;
+  --card-bg: #ffffff;
+  --sidebar-bg: #0f1e36;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 16px rgba(15,30,54,0.08);
+  --shadow-lg: 0 8px 40px rgba(15,30,54,0.16);
+}
+
+body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: var(--text); min-height: 100vh; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ── AUTH SCREEN ── */
+#screen-auth {
+  background: var(--navy);
+  align-items: stretch;
+}
+
+.auth-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-left::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(29,158,117,0.15) 0%, transparent 70%);
+  top: -100px; left: -100px;
+  pointer-events: none;
+}
+
+.auth-left::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(24,95,165,0.12) 0%, transparent 70%);
+  bottom: -50px; right: 60px;
+  pointer-events: none;
+}
+
+.auth-brand {
+  font-family: 'DM Serif Display', serif;
+  font-size: 36px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.auth-brand span { color: #5DCAA5; }
+
+.auth-tagline {
+  font-size: 15px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 56px;
+  letter-spacing: 0.3px;
+}
+
+.auth-features { list-style: none; display: flex; flex-direction: column; gap: 20px; }
+.auth-feat {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.feat-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: rgba(93,202,165,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  border: 1px solid rgba(93,202,165,0.2);
+}
+.feat-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 2px; }
+.feat-desc { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+
+.auth-right {
+  width: 440px;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 44px;
+  position: relative;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  background: #f0f4f8;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 32px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.auth-tab.active {
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.auth-form-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.auth-form-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+
+.form-group { margin-bottom: 14px; }
+.form-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text2);
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border 0.15s, box-shadow 0.15s;
+  background: #fff;
+}
+.form-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.1);
+}
+.form-input::placeholder { color: var(--text3); }
+
+.input-wrap { position: relative; }
+.input-wrap .eye-btn {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  cursor: pointer; font-size: 14px;
+  color: var(--text3);
+  padding: 4px;
+}
+
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.btn-auth {
+  width: 100%;
+  padding: 12px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-auth:hover { background: var(--teal-mid); }
+.btn-auth:active { transform: scale(0.99); }
+.btn-auth:disabled { background: #9fd4be; cursor: not-allowed; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text3);
+  font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.privacy-note {
+  margin-top: 20px;
+  padding: 12px 14px;
+  background: #f7faf9;
+  border-radius: 9px;
+  border: 1px solid #d1ede4;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.privacy-note-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.privacy-note-text { font-size: 11.5px; color: var(--text2); line-height: 1.5; }
+
+.auth-error {
+  background: var(--red-light);
+  color: var(--red);
+  border: 1px solid #f7c1c1;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+}
+.auth-error.show { display: block; }
+
+.auth-success {
+  background: var(--teal-light);
+  color: var(--teal-dark);
+  border: 1px solid #9FE1CB;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+}
+.auth-success.show { display: block; }
+
+/* ── APP SCREEN ── */
+#screen-app {
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 248px;
+  min-height: 100vh;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform 0.3s;
+}
+
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.logo-mark {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: #fff;
+}
+.logo-mark span { color: #5DCAA5; }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+
+.nav-section { padding: 14px 12px; flex: 1; overflow-y: auto; }
+.nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); padding: 0 8px; margin-bottom: 5px; margin-top: 14px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13.5px; font-weight: 400;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer; transition: all 0.15s;
+  margin-bottom: 1px;
+  border: none; background: none;
+  width: 100%; text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.nav-item.active { background: rgba(93,202,165,0.14); color: #5DCAA5; font-weight: 500; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  padding: 14px 12px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.user-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 8px;
+}
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #5DCAA5, #185FA5);
+}
+.user-name { font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 500; }
+.user-role { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+.btn-logout {
+  width: 100%;
+  padding: 8px;
+  background: rgba(163,45,45,0.12);
+  border: 1px solid rgba(163,45,45,0.2);
+  color: #f09595;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-logout:hover { background: rgba(163,45,45,0.2); }
+
+/* Main */
+.main { margin-left: 248px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.page-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--navy); }
+
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+
+.secure-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--teal-mid);
+  background: var(--teal-light);
+  padding: 4px 10px; border-radius: 20px; font-weight: 500;
+}
+
+.btn { padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-mid); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: #f4f6f9; }
+
+.content { padding: 24px 28px; flex: 1; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.stat-card { background: #fff; border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 600; color: var(--navy); line-height: 1; margin-bottom: 5px; }
+
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-green { background: var(--teal-light); color: var(--teal-mid); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+
+.grid-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; margin-bottom: 22px; }
+
+.card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.card-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--navy); }
+.card-body { padding: 20px; }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); font-weight: 500; padding: 10px 16px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+.data-table td { padding: 13px 16px; font-size: 13.5px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #fafbfc; cursor: pointer; }
+.data-table tr.empty-row:hover td { background: transparent; cursor: default; }
+
+.cell-name { display: flex; align-items: center; gap: 10px; }
+.c-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+/* Timeline */
+.timeline { list-style: none; }
+.tl-item { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+.tl-item::before { content: ''; position: absolute; left: 13px; top: 26px; bottom: 0; width: 1px; background: var(--border); }
+.tl-item:last-child::before { display: none; }
+.tl-dot { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.tl-text { font-size: 13px; color: var(--text2); line-height: 1.4; }
+.tl-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.tab { padding: 9px 16px; font-size: 13px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+/* Client detail */
+.client-detail-grid { display: grid; grid-template-columns: 270px 1fr; gap: 16px; align-items: start; }
+.client-profile-top { padding: 24px 20px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; margin: 0 auto 12px; }
+.profile-name { font-size: 16px; font-weight: 600; color: var(--navy); }
+.profile-type { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px; border-bottom: 1px solid #f9fafb; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-key { color: var(--text3); }
+.info-val { font-weight: 500; }
+
+/* Financial statement */
+.fs-table { width: 100%; border-collapse: collapse; }
+.fs-table th { font-size: 12px; background: #f7f9fc; color: var(--text2); padding: 10px 16px; text-align: left; font-weight: 600; }
+.fs-table th:last-child, .fs-table td:last-child { text-align: right; }
+.fs-table td { padding: 9px 16px; font-size: 13.5px; border-bottom: 1px solid #f3f4f6; }
+.fs-table tr.section-head td { background: #f0f4f8; font-weight: 600; font-size: 12px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; }
+.fs-table tr.total-row td { border-top: 2px solid var(--border); font-weight: 700; font-size: 14px; color: var(--navy); background: #f9fafb; }
+
+/* Upload */
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: all 0.15s; background: #fafbfc; }
+.upload-zone:hover { border-color: var(--teal); background: var(--teal-light); }
+
+/* Document items */
+.doc-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; margin-bottom: 8px; background: #fff; cursor: pointer; transition: all 0.15s; }
+.doc-item:hover { box-shadow: var(--shadow); }
+
+/* Progress */
+.progress-bar { height: 6px; background: #e8edf2; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+.progress-fill { height: 100%; border-radius: 3px; background: var(--teal); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,20,40,0.55); z-index: 300; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 16px; width: 500px; max-width: 95vw; box-shadow: var(--shadow-lg); overflow: hidden; animation: slideUp 0.2s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 600; color: var(--navy); }
+.modal-close { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--text3); background: #f4f6f9; border: none; }
+.modal-body { padding: 22px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid #f3f4f6; display: flex; gap: 8px; justify-content: flex-end; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Search */
+.search-bar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 9px; padding: 9px 14px; margin-bottom: 16px; }
+.search-bar input { border: none; outline: none; font-size: 13.5px; flex: 1; font-family: 'DM Sans', sans-serif; color: var(--text); background: transparent; }
+
+/* Privacy banner */
+.privacy-banner {
+  background: linear-gradient(135deg, #0f1e36, #1a2e4a);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.privacy-icon { font-size: 22px; }
+.privacy-text h4 { font-size: 13.5px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.privacy-text p { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+/* Notification toast */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 999;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInUp 0.3s ease;
+}
+.toast.show { display: flex; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Loading */
+.loading-screen {
+  position: fixed; inset: 0;
+  background: var(--navy);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 999;
+  transition: opacity 0.4s;
+}
+.loading-logo { font-family: 'DM Serif Display', serif; font-size: 32px; color: #fff; margin-bottom: 8px; }
+.loading-logo span { color: #5DCAA5; }
+.loading-bar { width: 160px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 20px; }
+.loading-fill { height: 100%; background: #5DCAA5; border-radius: 2px; animation: loadFill 1.2s ease forwards; }
+@keyframes loadFill { from { width: 0; } to { width: 100%; } }
+
+/* Hamburger */
+.menu-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--navy); }
+
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-toggle { display: block; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .client-detail-grid { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { width: 100%; padding: 40px 28px; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+.note-card { background: #fafbfc; border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; margin-bottom: 8px; }
+.note-meta { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+.note-body { font-size: 13.5px; color: var(--text2); line-height: 1.5; }
+
+/* ── DOCUMENT VIEWER MODAL ── */
+#doc-viewer-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(5,12,25,0.88); backdrop-filter: blur(6px);
+  flex-direction: column;
+}
+#doc-viewer-overlay.open { display: flex; }
+.viewer-topbar {
+  background: #0f1e36; border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 20px; display: flex; align-items: center; gap: 14px;
+  flex-shrink: 0;
+}
+.viewer-filename {
+  flex: 1; font-size: 14px; font-weight: 600; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.viewer-meta { font-size: 12px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.viewer-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.vbtn {
+  padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.vbtn-primary { background: #1D9E75; color: #fff; }
+.vbtn-primary:hover { background: #0F6E56; }
+.vbtn-ghost { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+.vbtn-ghost:hover { background: rgba(255,255,255,0.14); }
+.vbtn-danger { background: rgba(163,45,45,0.2); color: #f09595; border: 1px solid rgba(163,45,45,0.3); }
+.viewer-body {
+  flex: 1; overflow: auto; display: flex; align-items: flex-start;
+  justify-content: center; padding: 24px; background: #111a2e;
+}
+.viewer-pdf-frame {
+  width: 100%; max-width: 900px; height: 100%;
+  border: none; border-radius: 8px;
+  background: #fff; min-height: calc(100vh - 100px);
+}
+.viewer-img {
+  max-width: 100%; max-height: calc(100vh - 120px);
+  border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  object-fit: contain;
+}
+.viewer-text-wrap {
+  width: 100%; max-width: 860px; background: #fff; border-radius: 10px;
+  padding: 32px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+  line-height: 1.7; color: #1a1a2e; white-space: pre-wrap; word-break: break-word;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+.viewer-unsupported {
+  text-align: center; color: rgba(255,255,255,0.6); padding: 60px 20px;
+  max-width: 400px;
+}
+.viewer-unsupported .big-icon { font-size: 56px; margin-bottom: 16px; }
+.viewer-unsupported h3 { font-size: 18px; color: #fff; margin-bottom: 8px; }
+.viewer-unsupported p { font-size: 14px; line-height: 1.6; }
+.viewer-zoom { display: flex; align-items: center; gap: 8px; }
+.viewer-zoom span { font-size: 13px; color: rgba(255,255,255,0.6); min-width: 38px; text-align: center; }
+
+
+/* ════════════════════════════════
+   FULL MOBILE OPTIMISATION
+   ════════════════════════════════ */
+
+/* Bottom nav bar — mobile only */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: #0f1e36;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  justify-content: space-around;
+  align-items: center;
+}
+.bnav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 12px; border-radius: 10px;
+  cursor: pointer; border: none; background: none;
+  color: rgba(255,255,255,0.45);
+  font-size: 10px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+  min-width: 52px;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bnav-item .bni { font-size: 20px; line-height: 1; }
+.bnav-item.active { color: #5DCAA5; }
+.bnav-item.active .bni-wrap {
+  background: rgba(93,202,165,0.15);
+  border-radius: 10px;
+  padding: 4px 10px;
+}
+
+/* Mobile overlay when sidebar open */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 99;
+  background: rgba(0,0,0,0.5);
+}
+.sidebar-overlay.show { display: block; }
+
+/* Floating action button */
+.fab {
+  display: none;
+  position: fixed; bottom: 80px; right: 20px; z-index: 150;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--teal); color: #fff;
+  font-size: 24px; font-weight: 300;
+  border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(29,158,117,0.45);
+  align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.93); }
+
+@media (max-width: 768px) {
+  /* Show bottom nav & FAB, hide desktop elements */
+  .bottom-nav { display: flex; }
+  .fab { display: flex; }
+  .sidebar { transform: translateX(-100%); z-index: 200; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding-bottom: 70px; }
+  .menu-toggle { display: none !important; } /* use bottom nav instead */
+
+  /* Topbar slimmer */
+  .topbar { padding: 10px 14px; }
+  .page-title { font-size: 17px; }
+  .topbar-right .secure-badge { display: none; }
+  .topbar-right .btn-primary { padding: 7px 12px; font-size: 12px; }
+
+  /* Content padding */
+  .content { padding: 14px 14px 16px; }
+
+  /* Stats — 2 col on phone */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 22px; }
+
+  /* Cards */
+  .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+  .client-detail-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Tables — make scrollable */
+  .card { border-radius: 10px; }
+  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table th, .data-table td { padding: 10px 12px; font-size: 12.5px; white-space: nowrap; }
+  .fs-table th, .fs-table td { padding: 8px 12px; font-size: 13px; }
+
+  /* Forms — full width */
+  .form-row { grid-template-columns: 1fr !important; gap: 10px; }
+  .form-row-2 { grid-template-columns: 1fr !important; }
+  .form-input { padding: 11px 13px; font-size: 15px; } /* prevent iOS zoom */
+  .form-label { font-size: 12px; }
+
+  /* Modal full screen on mobile */
+  .modal-overlay { align-items: flex-end; }
+  .modal {
+    width: 100%; max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .modal-body { padding: 18px; }
+  .modal-footer { padding: 14px 18px; flex-direction: column; }
+  .modal-footer .btn { width: 100%; padding: 12px; justify-content: center; text-align: center; }
+
+  /* Tabs scrollable */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 1px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; padding: 9px 14px; }
+
+  /* Auth screen */
+  .auth-left { display: none; }
+  .auth-right { width: 100% !important; padding: 32px 22px !important; justify-content: flex-start; padding-top: 60px !important; }
+  #screen-auth { flex-direction: column; }
+  .auth-form-title { font-size: 22px; }
+  .btn-auth { padding: 14px; font-size: 15px; }
+  .form-input { font-size: 16px !important; } /* no iOS zoom */
+
+  /* Upload zone */
+  .upload-zone { padding: 22px 16px; }
+
+  /* Doc items — stacked */
+  .doc-item { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .doc-item > div:last-child { width: 100%; display: flex; gap: 6px; }
+  .doc-item > div:last-child .btn { flex: 1; text-align: center; padding: 8px 6px; font-size: 12px; }
+
+  /* Client profile card compact */
+  .client-profile-top { padding: 18px 16px; }
+  .profile-avatar { width: 52px; height: 52px; font-size: 18px; }
+  .profile-name { font-size: 15px; }
+
+  /* Viewer full screen */
+  .viewer-topbar { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .viewer-filename { font-size: 13px; }
+  .viewer-meta { display: none; }
+  .vbtn { padding: 6px 10px; font-size: 12px; }
+  #viewer-zoom-ctrl { order: 3; width: 100%; justify-content: center; }
+
+  /* Privacy banner compact */
+  .privacy-banner { padding: 14px 16px; gap: 12px; }
+  .privacy-text h4 { font-size: 13px; }
+  .privacy-text p { font-size: 11px; }
+
+  /* Search bar */
+  .search-bar { padding: 10px 14px; }
+  .search-bar input { font-size: 15px; }
+
+  /* Reports */
+  .report-card { flex-wrap: wrap; }
+
+  /* Progress */
+  .progress-bar { height: 8px; }
+
+  /* Timeline */
+  .tl-text { font-size: 12.5px; }
+
+  /* Note cards */
+  .note-card { padding: 12px; }
+}
+
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-value { font-size: 20px; }
+  .content { padding: 12px; }
+}
+
+/* Touch improvements for all devices */
+@media (hover: none) {
+  .nav-item:hover, .btn:hover, .feat-card:hover { transform: none; }
+  .btn-primary:active { opacity: 0.85; }
+  .doc-item:active { background: #f4f6f9; }
+}
+
+/* Safe area for iPhone notch */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .main { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+}
+
+/* PWA / Add to Home Screen meta */
+.install-banner {
+  display: none;
+  position: fixed; bottom: 80px; left: 14px; right: 14px; z-index: 149;
+  background: #0f1e36; border: 1px solid rgba(93,202,165,0.3);
+  border-radius: 12px; padding: 14px 16px;
+  flex-direction: row; align-items: center; gap: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  animation: slideUp2 0.3s ease;
+}
+@keyframes slideUp2 { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.install-banner.show { display: flex; }
+.ib-text { flex:1; font-size:13px; color:rgba(255,255,255,0.8); line-height:1.4; }
+.ib-text strong { color:#fff; display:block; margin-bottom:2px; }
+.ib-btn { padding:8px 14px; background:var(--teal); color:#fff; border:none; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+.ib-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:18px; cursor:pointer; padding:4px; }
+
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loading">
+  <div class="loading-logo">Ledger<span>Pro</span></div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;letter-spacing:1px;">SECURE ACCOUNTANT PORTAL</div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div class="screen" id="screen-auth">
+  <div class="auth-left">
+    <div class="auth-brand">Ledger<span>Pro</span></div>
+    <div class="auth-tagline">Secure client management for modern accountants</div>
+    <ul class="auth-features">
+      <li class="auth-feat">
+        <div class="feat-icon">🔐</div>
+        <div><div class="feat-title">End-to-End Privacy</div><div class="feat-desc">Your client data is completely isolated — no one else can access your records</div></div>
+      </li>
+      <li class="auth-feat">
+        <div class="feat-icon">📊</div>
+        <div><div class="feat-title">Financial Statements</div><div class="feat-desc">Build income statements, balance sheets, and cash flow reports instantly</div></div>
+      </li>
+      <li class="auth-feat">
+        <div class="feat-icon">📁</div>
+        <div><div class="feat-title">Document Vault</div><div class="feat-desc">Store and organize client documents with encrypted secure storage</div></div>
+      </li>
+      <li class="auth-feat">
+        <div class="feat-icon">👥</div>
+        <div><div class="feat-title">Multi-Firm Support</div><div class="feat-desc">Works for solo accountants and entire firms — each account fully private</div></div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <div class="auth-form-title">Welcome back</div>
+      <div class="auth-form-sub">Sign in to your secure accountant portal</div>
+      <div class="auth-error" id="login-error">Invalid email or password. Please try again.</div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="login-email" placeholder="you@firm.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input type="password" class="form-input" id="login-password" placeholder="Enter your password" autocomplete="current-password">
+          <button class="eye-btn" onclick="togglePwd('login-password', this)">👁</button>
+        </div>
+      </div>
+      <button class="btn-auth" onclick="handleLogin()" id="login-btn">Sign In Securely</button>
+      <div class="auth-divider">or</div>
+      <div style="text-align:center;font-size:13px;color:var(--text3);">Don't have an account? <a href="#" style="color:var(--teal);font-weight:500;" onclick="showAuthTab('register');return false;">Create one free</a></div>
+      <div class="privacy-note">
+        <div class="privacy-note-icon">🔒</div>
+        <div class="privacy-note-text">Your data is <strong>fully private</strong>. Each account is isolated — accountants can only see their own clients and documents.</div>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="form-register" style="display:none;">
+      <div class="auth-form-title">Create your account</div>
+      <div class="auth-form-sub">Set up your secure private accountant workspace</div>
+      <div class="auth-error" id="register-error">An error occurred. Please try again.</div>
+      <div class="auth-success" id="register-success">Account created! You can now sign in.</div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" class="form-input" id="reg-first" placeholder="Ahmed">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" class="form-input" id="reg-last" placeholder="Raza">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" id="reg-email" placeholder="you@firm.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Firm / Organization (optional)</label>
+        <input type="text" class="form-input" id="reg-firm" placeholder="e.g. Raza & Associates">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-input" id="reg-role">
+          <option>Senior Accountant</option>
+          <option>Accountant</option>
+          <option>Junior Accountant</option>
+          <option>Tax Specialist</option>
+          <option>Firm Owner / Manager</option>
+          <option>Auditor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input type="password" class="form-input" id="reg-password" placeholder="Min 6 characters">
+          <button class="eye-btn" onclick="togglePwd('reg-password', this)">👁</button>
+        </div>
+      </div>
+      <button class="btn-auth" onclick="handleRegister()" id="register-btn">Create Secure Account</button>
+      <div class="privacy-note" style="margin-top:14px;">
+        <div class="privacy-note-icon">🛡️</div>
+        <div class="privacy-note-text">Each account is <strong>completely isolated</strong>. Your clients, documents, and financial data are never visible to other users. No data is shared.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div class="screen" id="screen-app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Ledger<span>Pro</span></div>
+      <div class="logo-sub">Accountant Portal</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <button class="nav-item active" onclick="navigate('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</button>
+      <button class="nav-item" onclick="navigate('clients',this)"><span class="nav-icon">👥</span> Clients</button>
+      <button class="nav-item" onclick="navigate('statements',this)"><span class="nav-icon">📄</span> Financial Statements</button>
+      <button class="nav-item" onclick="navigate('documents',this)"><span class="nav-icon">📁</span> Documents</button>
+      <button class="nav-item" onclick="navigate('reports',this)"><span class="nav-icon">📈</span> Reports</button>
+      <div class="nav-label">Account</div>
+      <button class="nav-item" onclick="navigate('profile',this)"><span class="nav-icon">👤</span> My Profile</button>
+      <button class="nav-item" onclick="navigate('privacy',this)"><span class="nav-icon">🔐</span> Privacy & Security</button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="sidebar-avatar">AR</div>
+        <div>
+          <div class="user-name" id="sidebar-name">Loading...</div>
+          <div class="user-role" id="sidebar-role">Accountant</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 class="page-title" id="topbar-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="secure-badge">🔒 Private & Encrypted</div>
+        <button class="btn btn-primary" onclick="openModal('modal-add-client')">+ New Client</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="section active" id="sec-dashboard">
+        <div class="privacy-banner">
+          <div class="privacy-icon">🛡️</div>
+          <div class="privacy-text">
+            <h4>Your private workspace</h4>
+            <p>All data shown below belongs exclusively to your account. Other accountants cannot see your clients or documents.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">My Clients</div>
+            <div class="stat-value" id="stat-clients">0</div>
+            <span class="badge badge-green">Your portfolio</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Documents</div>
+            <div class="stat-value" id="stat-docs">0</div>
+            <span class="badge badge-blue">Stored securely</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Statements</div>
+            <div class="stat-value" id="stat-stmts">0</div>
+            <span class="badge badge-green">Prepared</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Reports</div>
+            <div class="stat-value" id="stat-reports">0</div>
+            <span class="badge badge-amber">This quarter</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent Clients</span>
+              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;" onclick="navigate('clients',document.querySelector('[onclick*=clients]'))">View All</button>
+            </div>
+            <div id="dash-client-list">
+              <div class="empty-state"><div class="empty-icon">👥</div><p>No clients yet. Add your first client!</p></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Activity Log</span></div>
+            <div class="card-body">
+              <ul class="timeline" id="activity-log">
+                <div class="empty-state" style="padding:10px;"><div class="empty-icon" style="font-size:24px;">📋</div><p style="font-size:12px;">No activity yet</p></div>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLIENTS -->
+      <section class="section" id="sec-clients">
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" placeholder="Search your clients..." oninput="filterClients(this.value)">
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">My Clients</span>
+            <button class="btn btn-primary" onclick="openModal('modal-add-client')">+ Add Client</button>
+          </div>
+          <div id="clients-container">
+            <div class="empty-state" style="padding:32px;"><div class="empty-icon">👥</div><p>No clients yet. Click "Add Client" to get started.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLIENT DETAIL -->
+      <section class="section" id="sec-client-detail">
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-ghost" onclick="navigate('clients',null)" style="font-size:12px;">← Back to Clients</button>
+        </div>
+        <div class="client-detail-grid">
+          <div>
+            <div class="card">
+              <div class="client-profile-top">
+                <div class="profile-avatar" id="det-avatar" style="background:#E1F5EE;color:#0F6E56;">ZT</div>
+                <div class="profile-name" id="det-name">Client Name</div>
+                <div class="profile-type" id="det-type">Type</div>
+                <div style="margin-top:10px;"><span class="badge badge-green" id="det-status">Active</span></div>
+              </div>
+              <div id="det-info-rows"></div>
+            </div>
+            <div class="card" style="margin-top:12px;">
+              <div class="card-header"><span class="card-title" style="font-size:12px;color:var(--text3);">🔒 Privacy Note</span></div>
+              <div style="padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.6;">This client's data is visible only to your account. No other user can access this record.</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="tabs">
+              <button class="tab active" onclick="switchTab(this,'det-tab-stmt')">Financial Statements</button>
+              <button class="tab" onclick="switchTab(this,'det-tab-docs')">Documents</button>
+              <button class="tab" onclick="switchTab(this,'det-tab-notes')">Notes</button>
+            </div>
+
+            <div id="det-tab-stmt">
+              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                <select class="form-input" style="width:auto;" id="stmt-fy"><option>FY 2024-25</option><option>FY 2023-24</option><option>FY 2022-23</option></select>
+                <button class="btn btn-ghost" onclick="showStmt('income')">Income Statement</button>
+                <button class="btn btn-ghost" onclick="showStmt('balance')">Balance Sheet</button>
+                <button class="btn btn-ghost" onclick="showStmt('cashflow')">Cash Flow</button>
+              </div>
+              <div id="stmt-content" class="card">
+                <div class="empty-state" style="padding:32px;"><div class="empty-icon">📄</div><p>Select a statement type above to view or enter data</p></div>
+              </div>
+            </div>
+
+            <div id="det-tab-docs" style="display:none;">
+              <div class="upload-zone" onclick="simulateUpload()">
+                <div style="font-size:28px;margin-bottom:8px;">☁️</div>
+                <div style="font-size:14px;color:var(--text2);">Tap to upload document</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">PDF, Excel, Word, CSV — Encrypted for your account only</div>
+              </div>
+              <div id="client-docs-list" style="margin-top:14px;"></div>
+            </div>
+
+            <div id="det-tab-notes" style="display:none;">
+              <textarea class="form-input" id="note-input" rows="4" placeholder="Add a note about this client..." style="margin-bottom:8px;resize:vertical;"></textarea>
+              <button class="btn btn-primary" onclick="saveNote()" style="margin-bottom:16px;">Save Note</button>
+              <div id="notes-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATEMENTS -->
+      <section class="section" id="sec-statements">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">All Financial Statements</span>
+          </div>
+          <div id="all-statements-container">
+            <div class="empty-state" style="padding:32px;"><div class="empty-icon">📄</div><p>No statements yet. Open a client to add financial data.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DOCUMENTS -->
+      <section class="section" id="sec-documents">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="padding:20px;">
+            <div class="upload-zone" onclick="triggerFileUpload()" ondragover="event.preventDefault();this.style.borderColor='var(--teal)'" ondrop="event.preventDefault();this.style.borderColor='';handleFileDrop(event)">
+              <div style="font-size:28px;margin-bottom:8px;">🔐</div>
+              <div style="font-size:14px;color:var(--text2);font-weight:500;">Click to choose files or drag & drop here</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px;">PDF, Excel, Word, CSV, Images — Max 4MB per file</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">All Documents</span></div>
+          <div id="all-docs-container" style="padding:16px;">
+            <div class="empty-state"><div class="empty-icon">📁</div><p>No documents yet.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="section" id="sec-reports">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><span class="card-title">Generate Report</span></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Client</label>
+                <select class="form-input" id="report-client-select"><option value="">— Select Client —</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select class="form-input"><option>Profit & Loss</option><option>Balance Sheet</option><option>Cash Flow</option><option>Tax Summary</option></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">From</label><input type="date" class="form-input" value="2024-07-01"></div>
+              <div class="form-group"><label class="form-label">To</label><input type="date" class="form-input" value="2025-06-30"></div>
+            </div>
+            <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+          </div>
+        </div>
+        <div id="reports-list"></div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="section" id="sec-profile">
+        <div style="max-width:540px;">
+          <div class="card">
+            <div class="card-header"><span class="card-title">My Profile</span></div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+                <div class="user-avatar" id="profile-big-avatar" style="width:56px;height:56px;font-size:18px;background:linear-gradient(135deg,#5DCAA5,#185FA5);">AR</div>
+                <div>
+                  <div style="font-size:18px;font-weight:600;color:var(--navy);" id="profile-fullname">Ahmed Raza</div>
+                  <div style="font-size:13px;color:var(--text3);" id="profile-email-display">ahmed@firm.com</div>
+                </div>
+              </div>
+              <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="profile-name-input"></div>
+              <div class="form-group"><label class="form-label">Firm</label><input type="text" class="form-input" id="profile-firm-input"></div>
+              <div class="form-group"><label class="form-label">Role</label><input type="text" class="form-input" id="profile-role-input"></div>
+              <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIVACY -->
+      <section class="section" id="sec-privacy">
+        <div style="max-width:560px;">
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">🔐 Privacy & Security</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="padding:14px;background:#f7fdf9;border-radius:9px;border:1px solid #d1ede4;">
+                  <div style="font-size:13.5px;font-weight:600;color:var(--teal-dark);margin-bottom:4px;">✅ Account Isolation</div>
+                  <div style="font-size:12.5px;color:var(--text2);line-height:1.5;">Your clients, documents, and financial data are stored under your unique account ID. No other user — even from the same firm — can access your data.</div>
+                </div>
+                <div style="padding:14px;background:#f7fdf9;border-radius:9px;border:1px solid #d1ede4;">
+                  <div style="font-size:13.5px;font-weight:600;color:var(--teal-dark);margin-bottom:4px;">✅ Private Storage</div>
+                  <div style="font-size:12.5px;color:var(--text2);line-height:1.5;">All data is stored in a private namespace keyed to your account. Each record is prefixed with your unique user ID so namespaces never overlap.</div>
+                </div>
+                <div style="padding:14px;background:#f7fdf9;border-radius:9px;border:1px solid #d1ede4;">
+                  <div style="font-size:13.5px;font-weight:600;color:var(--teal-dark);margin-bottom:4px;">✅ Session Security</div>
+                  <div style="font-size:12.5px;color:var(--text2);line-height:1.5;">Your session is stored locally in this browser only. Signing out immediately clears your session token.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Change Password</span></div>
+            <div class="card-body">
+              <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" id="pwd-current" placeholder="••••••••"></div>
+              <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" id="pwd-new" placeholder="Min 6 characters"></div>
+              <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebarMobile()"></div>
+
+  <!-- Bottom Navigation Bar (mobile) -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" id="bn-dashboard" onclick="mobileNav('dashboard',this)">
+      <div class="bni-wrap"><div class="bni">📊</div></div>
+      <span>Home</span>
+    </button>
+    <button class="bnav-item" id="bn-clients" onclick="mobileNav('clients',this)">
+      <div class="bni-wrap"><div class="bni">👥</div></div>
+      <span>Clients</span>
+    </button>
+    <button class="bnav-item" id="bn-statements" onclick="mobileNav('statements',this)">
+      <div class="bni-wrap"><div class="bni">📄</div></div>
+      <span>Statements</span>
+    </button>
+    <button class="bnav-item" id="bn-documents" onclick="mobileNav('documents',this)">
+      <div class="bni-wrap"><div class="bni">📁</div></div>
+      <span>Docs</span>
+    </button>
+    <button class="bnav-item" id="bn-more" onclick="toggleSidebar()">
+      <div class="bni-wrap"><div class="bni">☰</div></div>
+      <span>More</span>
+    </button>
+  </nav>
+
+  <!-- Floating Action Button -->
+  <button class="fab" id="fab-btn" onclick="openModal('modal-add-client')" title="Add Client">+</button>
+
+  <!-- Install to Home Screen banner -->
+  <div class="install-banner" id="install-banner">
+    <div class="ib-text"><strong>Add to Home Screen</strong>Tap Share → "Add to Home Screen" for app-like access</div>
+    <button class="ib-btn" onclick="dismissInstall()">Got it</button>
+    <button class="ib-close" onclick="dismissInstall()">✕</button>
+  </div>
+
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="modal-add-client">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add New Client</span>
+      <button class="modal-close" onclick="closeModal('modal-add-client')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="c-name" placeholder="e.g. Zara Traders"></div>
+        <div class="form-group"><label class="form-label">NTN / Tax ID</label><input type="text" class="form-input" id="c-ntn" placeholder="1234567-8"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Client Type</label><select class="form-input" id="c-type"><option>Corporate</option><option>SME</option><option>Partnership</option><option>Individual</option></select></div>
+        <div class="form-group"><label class="form-label">Industry</label><input type="text" class="form-input" id="c-industry" placeholder="e.g. Retail"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="c-email" placeholder="info@client.pk"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="text" class="form-input" id="c-phone" placeholder="+92 300 0000000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Fiscal Year End</label><select class="form-input" id="c-fy"><option>June 30</option><option>December 31</option><option>March 31</option><option>September 30</option></select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="c-status"><option>Active</option><option>Pending</option><option>Inactive</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-client')">Cancel</button>
+      <button class="btn btn-primary" onclick="addClient()">Add Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ <span id="toast-msg">Done</span></div>
+
+<script>
+// ── STORAGE HELPERS ──
+// Uses localStorage — works perfectly as a local file or on a web server.
+// All user data is namespaced by user ID for full privacy isolation.
+let currentUser = null;
+let currentClientId = null;
+
+function userKey(suffix) {
+  return `lp:u:${currentUser.id}:${suffix}`;
+}
+
+async function saveData(key, value) {
+  try { localStorage.setItem(userKey(key), JSON.stringify(value)); } catch(e) { console.warn('Storage err', e); }
+}
+
+async function loadData(key, fallback) {
+  try {
+    const r = localStorage.getItem(userKey(key));
+    return r ? JSON.parse(r) : fallback;
+  } catch(e) { return fallback; }
+}
+
+// ── USER REGISTRY — stored in localStorage under a shared key ──
+async function getAllUsers() {
+  try {
+    const r = localStorage.getItem('lp:registry:users');
+    return r ? JSON.parse(r) : {};
+  } catch(e) { return {}; }
+}
+
+async function saveAllUsers(users) {
+  try { localStorage.setItem('lp:registry:users', JSON.stringify(users)); } catch(e) {}
+}
+
+// Simple hash (for demo — production should use bcrypt server-side)
+async function hashPwd(pwd) {
+  const enc = new TextEncoder().encode(pwd + ':ledgerpro-salt-2025');
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function genId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+// ── AUTH ──
+function showAuthTab(tab) {
+  document.getElementById('form-login').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('register-error').classList.remove('show');
+  document.getElementById('register-success').classList.remove('show');
+}
+
+function togglePwd(id, btn) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pwd = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.classList.remove('show');
+  if (!email || !pwd) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  try {
+    const users = await getAllUsers();
+    const user = users[email];
+    if (!user) { errEl.textContent = 'No account found with this email.'; errEl.classList.add('show'); return; }
+    const hash = await hashPwd(pwd);
+    if (hash !== user.pwdHash) { errEl.textContent = 'Incorrect password. Please try again.'; errEl.classList.add('show'); return; }
+    // Login success
+    currentUser = { id: user.id, email, firstName: user.firstName, lastName: user.lastName, firm: user.firm, role: user.role };
+    localStorage.setItem('lp_session', JSON.stringify(currentUser));
+    await enterApp();
+  } catch(e) { errEl.textContent = 'An error occurred. Please try again.'; errEl.classList.add('show'); }
+  finally { btn.textContent = 'Sign In Securely'; btn.disabled = false; }
+}
+
+async function handleRegister() {
+  const first = document.getElementById('reg-first').value.trim();
+  const last = document.getElementById('reg-last').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const firm = document.getElementById('reg-firm').value.trim();
+  const role = document.getElementById('reg-role').value;
+  const pwd = document.getElementById('reg-password').value;
+  const errEl = document.getElementById('register-error');
+  const sucEl = document.getElementById('register-success');
+  const btn = document.getElementById('register-btn');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+  if (!first || !last || !email || !pwd) { errEl.textContent = 'Please fill in all required fields.'; errEl.classList.add('show'); return; }
+  if (pwd.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email address.'; errEl.classList.add('show'); return; }
+  btn.textContent = 'Creating account...'; btn.disabled = true;
+  try {
+    const users = await getAllUsers();
+    if (users[email]) { errEl.textContent = 'An account with this email already exists.'; errEl.classList.add('show'); return; }
+    const id = genId();
+    const pwdHash = await hashPwd(pwd);
+    users[email] = { id, firstName: first, lastName: last, firm, role, pwdHash };
+    await saveAllUsers(users);
+    sucEl.textContent = `✅ Account created for ${first} ${last}! You can now sign in.`;
+    sucEl.classList.add('show');
+    setTimeout(() => showAuthTab('login'), 2000);
+    document.getElementById('login-email').value = email;
+  } catch(e) { errEl.textContent = 'An error occurred. Please try again.'; errEl.classList.add('show'); }
+  finally { btn.textContent = 'Create Secure Account'; btn.disabled = false; }
+}
+
+async function enterApp() {
+  const u = currentUser;
+  const initials = (u.firstName[0] + u.lastName[0]).toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = u.firstName + ' ' + u.lastName;
+  document.getElementById('sidebar-role').textContent = u.role || 'Accountant';
+  document.getElementById('profile-big-avatar').textContent = initials;
+  document.getElementById('profile-fullname').textContent = u.firstName + ' ' + u.lastName;
+  document.getElementById('profile-email-display').textContent = u.email;
+  document.getElementById('profile-name-input').value = u.firstName + ' ' + u.lastName;
+  document.getElementById('profile-firm-input').value = u.firm || '';
+  document.getElementById('profile-role-input').value = u.role || '';
+
+  showScreen('screen-app');
+  navigate('dashboard', document.querySelector('.nav-item'));
+  await refreshDashboard();
+}
+
+function handleLogout() {
+  localStorage.removeItem('lp_session');
+  currentUser = null;
+  currentClientId = null;
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  showScreen('screen-auth');
+  showAuthTab('login');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── NAVIGATION ──
+function navigate(page, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + page).classList.add('active');
+  const titles = { dashboard:'Dashboard', clients:'Clients', 'client-detail':'Client Detail', statements:'Financial Statements', documents:'Documents', reports:'Reports', profile:'My Profile', privacy:'Privacy & Security' };
+  document.getElementById('topbar-title').textContent = titles[page] || page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+  if (page === 'reports') populateReportClientSelect();
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// ── CLIENTS ──
+async function loadClients() { return await loadData('clients', []); }
+
+async function saveClients(clients) { await saveData('clients', clients); }
+
+async function addClient() {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { showToast('Please enter a client name'); return; }
+  const client = {
+    id: genId(),
+    name,
+    ntn: document.getElementById('c-ntn').value.trim(),
+    type: document.getElementById('c-type').value,
+    industry: document.getElementById('c-industry').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    phone: document.getElementById('c-phone').value.trim(),
+    fy: document.getElementById('c-fy').value,
+    status: document.getElementById('c-status').value,
+    addedAt: new Date().toISOString()
+  };
+  const clients = await loadClients();
+  clients.unshift(client);
+  await saveClients(clients);
+  await logActivity(`New client added: ${name}`);
+  closeModal('modal-add-client');
+  ['c-name','c-ntn','c-industry','c-email','c-phone'].forEach(id => document.getElementById(id).value = '');
+  showToast(`✅ Client "${name}" added`);
+  await refreshDashboard();
+  renderClientsTable(clients);
+}
+
+async function refreshDashboard() {
+  const clients = await loadClients();
+  const docs = await loadData('docs', []);
+  const reports = await loadData('reports', []);
+  document.getElementById('stat-clients').textContent = clients.length;
+  document.getElementById('stat-docs').textContent = docs.length;
+  document.getElementById('stat-reports').textContent = reports.length;
+  let totalStmts = 0;
+  for (const c of clients) {
+    const stmts = await loadData(`stmts:${c.id}`, []);
+    totalStmts += stmts.length;
+  }
+  document.getElementById('stat-stmts').textContent = totalStmts;
+  renderDashClients(clients);
+  renderActivityLog();
+}
+
+function renderDashClients(clients) {
+  const el = document.getElementById('dash-client-list');
+  if (!clients.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>No clients yet. Add your first client!</p></div>'; return; }
+  const colors = [['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FCEBEB','#791F1F'],['#EAF3DE','#3B6D11']];
+  const rows = clients.slice(0,5).map((c,i) => {
+    const [bg,fg] = colors[i%colors.length];
+    const init = c.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const statusColors = { Active:'badge-green', Pending:'badge-amber', Inactive:'badge-red', Review:'badge-red' };
+    return `<tr onclick="openClientDetail('${c.id}')">
+      <td><div class="cell-name"><div class="c-avatar" style="background:${bg};color:${fg};">${init}</div><span style="font-weight:500;">${esc(c.name)}</span></div></td>
+      <td>${esc(c.type)}</td>
+      <td><span class="badge ${statusColors[c.status]||'badge-green'}">${esc(c.status)}</span></td>
+      <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;">View →</button></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<table class="data-table"><thead><tr><th>Client</th><th>Type</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function renderClientsTable(clients) {
+  const el = document.getElementById('clients-container');
+  if (!clients.length) { el.innerHTML = '<div class="empty-state" style="padding:32px;"><div class="empty-icon">👥</div><p>No clients yet. Click "Add Client" to get started.</p></div>'; return; }
+  const colors = [['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FCEBEB','#791F1F'],['#EAF3DE','#3B6D11']];
+  const rows = clients.map((c,i) => {
+    const [bg,fg] = colors[i%colors.length];
+    const init = c.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const statusColors = { Active:'badge-green', Pending:'badge-amber', Inactive:'badge-red' };
+    const added = new Date(c.addedAt).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
+    return `<tr onclick="openClientDetail('${c.id}')">
+      <td><div class="cell-name"><div class="c-avatar" style="background:${bg};color:${fg};">${init}</div><div><div style="font-weight:500;">${esc(c.name)}</div><div style="font-size:11px;color:var(--text3);">NTN: ${esc(c.ntn)||'—'}</div></div></div></td>
+      <td>${esc(c.type)}</td><td>${esc(c.industry)||'—'}</td>
+      <td><span class="badge ${statusColors[c.status]||'badge-green'}">${esc(c.status)}</span></td>
+      <td>${esc(c.email)||'—'}</td><td>${added}</td>
+      <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();openClientDetail('${c.id}')">View →</button></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<table class="data-table"><thead><tr><th>Client</th><th>Type</th><th>Industry</th><th>Status</th><th>Email</th><th>Added</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function filterClients(q) {
+  const clients = await loadClients();
+  const filtered = clients.filter(c => JSON.stringify(c).toLowerCase().includes(q.toLowerCase()));
+  renderClientsTable(filtered);
+}
+
+async function openClientDetail(clientId) {
+  const clients = await loadClients();
+  const c = clients.find(x => x.id === clientId);
+  if (!c) return;
+  currentClientId = clientId;
+  const init = c.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('det-avatar').textContent = init;
+  document.getElementById('det-name').textContent = c.name;
+  document.getElementById('det-type').textContent = `${c.type}${c.industry ? ' · ' + c.industry : ''}`;
+  document.getElementById('det-status').textContent = c.status;
+  document.getElementById('det-status').className = `badge ${c.status==='Active'?'badge-green':c.status==='Pending'?'badge-amber':'badge-red'}`;
+  document.getElementById('det-info-rows').innerHTML = [
+    ['NTN', c.ntn||'—'], ['Email', c.email||'—'], ['Phone', c.phone||'—'],
+    ['FY End', c.fy||'—'], ['Status', c.status]
+  ].map(([k,v]) => `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${esc(v)}</span></div>`).join('');
+  // Reset tabs
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const firstTab = document.querySelector('#sec-client-detail .tab');
+  if (firstTab) firstTab.classList.add('active');
+  document.getElementById('det-tab-stmt').style.display = '';
+  document.getElementById('det-tab-docs').style.display = 'none';
+  document.getElementById('det-tab-notes').style.display = 'none';
+  document.getElementById('stmt-content').innerHTML = '<div class="empty-state" style="padding:32px;"><div class="empty-icon">📄</div><p>Select a statement type above</p></div>';
+  await loadClientDocs();
+  await loadNotes();
+  navigate('client-detail', null);
+  document.getElementById('topbar-title').textContent = c.name;
+}
+
+// ── STATEMENTS ──
+const incomeTemplate = [
+  {label:'Revenue', section:true},
+  {label:'Sales Revenue', key:'sales', def:0},
+  {label:'Other Income', key:'other_inc', def:0},
+  {label:'Total Revenue', total:true, keys:['sales','other_inc']},
+  {label:'Cost of Goods Sold', section:true},
+  {label:'Opening Stock', key:'open_stock', def:0},
+  {label:'Purchases', key:'purchases', def:0},
+  {label:'Closing Stock', key:'close_stock', def:0},
+  {label:'Gross Profit', total:true, formula:(d)=>((+d.sales||0)+(+d.other_inc||0)-(+d.open_stock||0)-(+d.purchases||0)+(+d.close_stock||0))},
+  {label:'Operating Expenses', section:true},
+  {label:'Salaries & Wages', key:'salaries', def:0},
+  {label:'Rent', key:'rent', def:0},
+  {label:'Utilities', key:'utilities', def:0},
+  {label:'Depreciation', key:'depreciation', def:0},
+  {label:'Other Expenses', key:'other_exp', def:0},
+  {label:'Net Profit Before Tax', total:true, formula:(d)=>((+d.sales||0)+(+d.other_inc||0)-(+d.open_stock||0)-(+d.purchases||0)+(+d.close_stock||0)-(+d.salaries||0)-(+d.rent||0)-(+d.utilities||0)-(+d.depreciation||0)-(+d.other_exp||0))},
+  {label:'Income Tax (29%)', formula:(d)=>{ const p=((+d.sales||0)+(+d.other_inc||0)-(+d.open_stock||0)-(+d.purchases||0)+(+d.close_stock||0)-(+d.salaries||0)-(+d.rent||0)-(+d.utilities||0)-(+d.depreciation||0)-(+d.other_exp||0)); return p>0?-(p*0.29):0; }},
+  {label:'Net Profit After Tax', total:true, formula:(d)=>{ const p=((+d.sales||0)+(+d.other_inc||0)-(+d.open_stock||0)-(+d.purchases||0)+(+d.close_stock||0)-(+d.salaries||0)-(+d.rent||0)-(+d.utilities||0)-(+d.depreciation||0)-(+d.other_exp||0)); return p>0?p*0.71:p; }, highlight:true}
+];
+
+async function showStmt(type) {
+  if (!currentClientId) return;
+  const key = `stmt:${currentClientId}:${type}`;
+  const data = await loadData(key, {});
+  const names = { income:'Income Statement', balance:'Balance Sheet', cashflow:'Cash Flow Statement' };
+  let html = `<div class="card-header"><span class="card-title">${names[type]}</span><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="saveStmt('${type}')">💾 Save</button></div></div>`;
+  if (type === 'income') {
+    html += `<table class="fs-table"><thead><tr><th>Item</th><th style="text-align:right;width:180px;">Amount (PKR)</th></tr></thead><tbody>`;
+    for (const row of incomeTemplate) {
+      if (row.section) { html += `<tr class="section-head"><td colspan="2">${row.label}</td></tr>`; continue; }
+      if (row.total || row.formula) {
+        const val = row.total && row.keys ? row.keys.reduce((a,k)=>a+(+data[k]||0),0) : row.formula(data);
+        html += `<tr class="total-row${row.highlight?' style="color:var(--teal);"':''}"><td>${row.label}</td><td style="color:${row.highlight?'var(--teal)':'inherit'}">${fmt(val)}</td></tr>`;
+      } else {
+        html += `<tr><td>${row.label}</td><td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right;width:140px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${row.key}" value="${data[row.key]||''}" oninput="liveUpdateStmt(this,'${type}')" placeholder="0"></td></tr>`;
+      }
+    }
+    html += `</tbody></table>`;
+  } else if (type === 'balance') {
+    const fields = [['Assets','assets_section',true],['Cash & Bank','{a_cash',false],['Accounts Receivable','a_recv',false],['Inventory','a_inv',false],['Fixed Assets','a_fixed',false],['Liabilities','liab_section',true],['Accounts Payable','l_pay',false],['Bank Loans','l_loan',false],['Equity','equity_section',true],['Share Capital','e_capital',false],['Retained Earnings','e_retained',false]];
+    html += `<table class="fs-table"><thead><tr><th>Item</th><th style="text-align:right;width:180px;">Amount (PKR)</th></tr></thead><tbody>`;
+    for (const [label, key, isSection] of fields) {
+      if (isSection) { html += `<tr class="section-head"><td colspan="2">${label}</td></tr>`; continue; }
+      const k = key.replace('{','');
+      html += `<tr><td>${label}</td><td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right;width:140px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${k}" value="${data[k]||''}" placeholder="0"></td></tr>`;
+    }
+    html += `</tbody></table>`;
+  } else {
+    const cfFields = [['Operating Activities','cf_op_section',true],['Net Income','cf_net',false],['Depreciation Add-back','cf_depr',false],['Changes in Working Capital','cf_wc',false],['Investing Activities','cf_inv_section',true],['Capital Expenditures','cf_capex',false],['Financing Activities','cf_fin_section',true],['Loan Proceeds','cf_loan',false],['Dividend Paid','cf_div',false]];
+    html += `<table class="fs-table"><thead><tr><th>Item</th><th style="text-align:right;width:180px;">Amount (PKR)</th></tr></thead><tbody>`;
+    for (const [label, key, isSection] of cfFields) {
+      if (isSection) { html += `<tr class="section-head"><td colspan="2">${label}</td></tr>`; continue; }
+      html += `<tr><td>${label}</td><td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right;width:140px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${key}" value="${data[key]||''}" placeholder="0"></td></tr>`;
+    }
+    html += `</tbody></table>`;
+  }
+  document.getElementById('stmt-content').innerHTML = html;
+}
+
+async function saveStmt(type) {
+  if (!currentClientId) return;
+  const inputs = document.querySelectorAll('#stmt-content input[data-key]');
+  const data = {};
+  inputs.forEach(inp => { data[inp.dataset.key] = inp.value; });
+  await saveData(`stmt:${currentClientId}:${type}`, data);
+  const stmts = await loadData(`stmts:${currentClientId}`, []);
+  if (!stmts.includes(type)) stmts.push(type);
+  await saveData(`stmts:${currentClientId}`, stmts);
+  await logActivity(`Financial statement saved for client`);
+  showToast('✅ Statement saved');
+  showStmt(type);
+}
+
+async function liveUpdateStmt(input, type) {
+  // Re-render totals live
+  setTimeout(() => showStmt(type), 100);
+}
+
+// ── DOCUMENTS ──
+async function loadClientDocs() {
+  const docs = await loadData(`docs:${currentClientId}`, []);
+  const el = document.getElementById('client-docs-list');
+  if (!docs.length) { el.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-icon" style="font-size:24px;">📁</div><p>No documents yet. Upload one above.</p></div>'; return; }
+  el.innerHTML = docs.map(d => {
+    const icon = d.name.match(/\.pdf$/i)?'📄':d.name.match(/\.(xlsx?|csv)$/i)?'📊':d.name.match(/\.(docx?|txt)$/i)?'📝':d.name.match(/\.(png|jpe?g|gif)$/i)?'🖼️':'📋';
+    const hasData = !!d.data;
+    const canView = hasData;
+    return `<div class="doc-item" style="cursor:${canView?'pointer':'default'}" onclick="${canView?`openDocViewer('${d.id}')`:''}" title="${canView?'Click to view':''}">
+      <div style="font-size:22px;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d.name)}</div>
+        <div style="font-size:12px;color:var(--text3);">${new Date(d.at).toLocaleDateString('en-PK')} · ${d.size}${canView?' · <span style=\"color:var(--teal);\">click to view</span>':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+        ${canView ? `<button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="openDocViewer('${d.id}')">👁 View</button>` : ''}
+        ${hasData ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="downloadDoc('${d.id}')">⬇</button>` : ''}
+        <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;" onclick="deleteDoc('${d.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Hidden file input for real uploads
+function triggerFileUpload() {
+  if (!currentClientId) { showToast('\u26a0\ufe0f Please open a client first'); return; }
+  document.getElementById('real-file-input').click();
+}
+
+async function handleFileUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  for (const file of files) {
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 4) { showToast('\u274c "' + file.name + '" is too large (max 4 MB)'); continue; }
+    showToast('\u23f3 Uploading "' + file.name + '"...');
+    try {
+      const base64 = await fileToBase64(file);
+      const doc = {
+        id: genId(), name: file.name,
+        size: sizeMB < 1 ? Math.round(file.size/1024)+' KB' : sizeMB.toFixed(1)+' MB',
+        type: file.type, data: base64, at: new Date().toISOString()
+      };
+      const docs = await loadData(`docs:${currentClientId}`, []);
+      docs.unshift(doc);
+      await saveData(`docs:${currentClientId}`, docs);
+      const allDocs = await loadData('docs', []);
+      allDocs.unshift({ id: doc.id, name: doc.name, size: doc.size, at: doc.at, clientId: currentClientId });
+      await saveData('docs', allDocs);
+      await logActivity('Document uploaded: ' + file.name);
+      showToast('\u2705 "' + file.name + '" uploaded');
+      await loadClientDocs();
+      await refreshDashboard();
+    } catch(e) { showToast('\u274c Failed to upload "' + file.name + '"'); }
+  }
+  input.value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleFileDrop(event) {
+  if (!currentClientId) { showToast('⚠️ Please open a client first'); return; }
+  const dt = event.dataTransfer;
+  if (!dt || !dt.files.length) return;
+  // Feed dropped files into our existing handler via a fake input object
+  handleFileUpload({ files: dt.files, value: '' });
+}
+
+function downloadDoc(docId) {
+  loadData(`docs:${currentClientId}`, []).then(docs => {
+    const doc = docs.find(d => d.id === docId);
+    if (!doc || !doc.data) { showToast('File not available for download'); return; }
+    const a = document.createElement('a');
+    a.href = doc.data; a.download = doc.name; a.click();
+  });
+}
+
+async function simulateUpload() { triggerFileUpload(); }
+
+async function deleteDoc(docId) {
+  if (!currentClientId) return;
+  let docs = await loadData(`docs:${currentClientId}`, []);
+  docs = docs.filter(d => d.id !== docId);
+  await saveData(`docs:${currentClientId}`, docs);
+  await loadClientDocs();
+  showToast('Document removed');
+}
+
+// ── NOTES ──
+async function loadNotes() {
+  const notes = await loadData(`notes:${currentClientId}`, []);
+  const el = document.getElementById('notes-list');
+  if (!notes.length) { el.innerHTML = '<div class="empty-state" style="padding:10px;"><p style="font-size:13px;">No notes yet.</p></div>'; return; }
+  el.innerHTML = notes.map(n => `
+    <div class="note-card">
+      <div class="note-meta">${esc(currentUser.firstName+' '+currentUser.lastName)} · ${new Date(n.at).toLocaleString('en-PK')}</div>
+      <div class="note-body">${esc(n.text)}</div>
+    </div>`).join('');
+}
+
+async function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) { showToast('Please type a note first'); return; }
+  const notes = await loadData(`notes:${currentClientId}`, []);
+  notes.unshift({ id: genId(), text, at: new Date().toISOString() });
+  await saveData(`notes:${currentClientId}`, notes);
+  document.getElementById('note-input').value = '';
+  await loadNotes();
+  showToast('✅ Note saved');
+}
+
+// ── ACTIVITY LOG ──
+async function logActivity(msg) {
+  const log = await loadData('activity', []);
+  log.unshift({ msg, at: new Date().toISOString() });
+  if (log.length > 20) log.pop();
+  await saveData('activity', log);
+}
+
+async function renderActivityLog() {
+  const log = await loadData('activity', []);
+  const el = document.getElementById('activity-log');
+  if (!log.length) { el.innerHTML = '<div class="empty-state" style="padding:10px;"><div class="empty-icon" style="font-size:24px;">📋</div><p style="font-size:12px;">No activity yet</p></div>'; return; }
+  const icons = { 'New client':'👤', 'Document':'📁', 'statement':'📄', 'Report':'📈', default:'✅' };
+  el.innerHTML = log.slice(0,6).map(l => {
+    const icon = Object.entries(icons).find(([k]) => l.msg.toLowerCase().includes(k.toLowerCase()))?.[1] || '✅';
+    const t = new Date(l.at);
+    const timeStr = (Date.now()-t<86400000) ? t.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : t.toLocaleDateString('en-PK',{day:'numeric',month:'short'});
+    return `<li class="tl-item"><div class="tl-dot" style="background:#E1F5EE;color:#1D9E75;">${icon}</div><div><div class="tl-text">${esc(l.msg)}</div><div class="tl-time">${timeStr}</div></div></li>`;
+  }).join('');
+}
+
+// ── REPORTS ──
+async function populateReportClientSelect() {
+  const clients = await loadClients();
+  const sel = document.getElementById('report-client-select');
+  sel.innerHTML = '<option value="">— Select Client —</option>' + clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
+
+async function generateReport() {
+  const sel = document.getElementById('report-client-select');
+  const clientId = sel.value;
+  if (!clientId) { showToast('Please select a client'); return; }
+  const clients = await loadClients();
+  const client = clients.find(c => c.id === clientId);
+  const types = document.querySelector('#sec-reports select:nth-of-type(2)').value;
+  const report = { id: genId(), clientName: client.name, type: types, at: new Date().toISOString(), status: 'Ready' };
+  const reports = await loadData('reports', []);
+  reports.unshift(report);
+  await saveData('reports', reports);
+  await logActivity(`Report generated: ${types} for ${client.name}`);
+  showToast(`✅ Report generated for ${client.name}`);
+  renderReportsList(reports);
+  await refreshDashboard();
+}
+
+async function renderReportsList(reports) {
+  if (!reports) reports = await loadData('reports', []);
+  const el = document.getElementById('reports-list');
+  if (!reports.length) { el.innerHTML = ''; return; }
+  el.innerHTML = reports.map(r => `
+    <div class="doc-item" style="border-radius:var(--radius);margin-bottom:10px;">
+      <div style="font-size:22px;">📈</div>
+      <div><div style="font-size:13.5px;font-weight:600;">${esc(r.type)} — ${esc(r.clientName)}</div><div style="font-size:12px;color:var(--text3);">${new Date(r.at).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})}</div></div>
+      <span class="badge badge-green" style="margin-left:auto;">${esc(r.status)}</span>
+    </div>`).join('');
+}
+
+// ── PROFILE ──
+async function saveProfile() {
+  const name = document.getElementById('profile-name-input').value.trim().split(' ');
+  const [first, ...rest] = name;
+  const last = rest.join(' ') || '';
+  const firm = document.getElementById('profile-firm-input').value.trim();
+  const role = document.getElementById('profile-role-input').value.trim();
+  currentUser.firstName = first; currentUser.lastName = last;
+  currentUser.firm = firm; currentUser.role = role;
+  localStorage.setItem('lp_session', JSON.stringify(currentUser));
+  const users = await getAllUsers();
+  if (users[currentUser.email]) {
+    users[currentUser.email].firstName = first;
+    users[currentUser.email].lastName = last;
+    users[currentUser.email].firm = firm;
+    users[currentUser.email].role = role;
+    await saveAllUsers(users);
+  }
+  document.getElementById('sidebar-name').textContent = `${first} ${last}`;
+  document.getElementById('sidebar-role').textContent = role || 'Accountant';
+  document.getElementById('sidebar-avatar').textContent = ((first[0]||'')+(last[0]||'')).toUpperCase();
+  document.getElementById('profile-big-avatar').textContent = ((first[0]||'')+(last[0]||'')).toUpperCase();
+  document.getElementById('profile-fullname').textContent = `${first} ${last}`;
+  showToast('✅ Profile updated');
+}
+
+async function changePassword() {
+  const cur = document.getElementById('pwd-current').value;
+  const newp = document.getElementById('pwd-new').value;
+  if (!cur || !newp) { showToast('Please fill both fields'); return; }
+  if (newp.length < 6) { showToast('New password must be at least 6 characters'); return; }
+  const users = await getAllUsers();
+  const user = users[currentUser.email];
+  const curHash = await hashPwd(cur);
+  if (curHash !== user.pwdHash) { showToast('❌ Current password is incorrect'); return; }
+  user.pwdHash = await hashPwd(newp);
+  await saveAllUsers(users);
+  document.getElementById('pwd-current').value = '';
+  document.getElementById('pwd-new').value = '';
+  showToast('✅ Password updated successfully');
+}
+
+
+// ── DOCUMENT VIEWER ──
+let viewerCurrentDocId = null;
+let viewerZoom = 1.0;
+
+async function openDocViewer(docId) {
+  const docs = await loadData(`docs:${currentClientId}`, []);
+  const doc = docs.find(d => d.id === docId);
+  if (!doc || !doc.data) { showToast('File data not available'); return; }
+  viewerCurrentDocId = docId;
+  viewerZoom = 1.0;
+  document.getElementById('viewer-fname').textContent = doc.name;
+  document.getElementById('viewer-fmeta').textContent = doc.size + ' · ' + new Date(doc.at).toLocaleDateString('en-PK');
+  const body = document.getElementById('viewer-body');
+  const zoomCtrl = document.getElementById('viewer-zoom-ctrl');
+  zoomCtrl.style.display = 'none';
+  body.innerHTML = '<div class="viewer-unsupported"><div class="big-icon" style="font-size:32px;">⏳</div><h3>Loading…</h3></div>';
+  document.getElementById('doc-viewer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const isPDF  = doc.name.match(/\.pdf$/i);
+  const isImg  = doc.name.match(/\.(png|jpe?g|gif|webp|bmp)$/i);
+  const isTxt  = doc.name.match(/\.txt$/i);
+  const isCSV  = doc.name.match(/\.csv$/i);
+  const isXLS  = doc.name.match(/\.(xlsx?|xls)$/i);
+  const isDOCX = doc.name.match(/\.docx?$/i);
+
+  if (isPDF) {
+    zoomCtrl.style.display = 'flex';
+    body.innerHTML = `<iframe class="viewer-pdf-frame" id="pdf-frame" src="${doc.data}" style="transform-origin:top center;transform:scale(1);width:100%;max-width:920px;min-height:calc(100vh - 100px);"></iframe>`;
+
+  } else if (isImg) {
+    zoomCtrl.style.display = 'flex';
+    body.innerHTML = `<img class="viewer-img" id="img-frame" src="${doc.data}" style="transform:scale(1);transform-origin:top center;max-width:100%;max-height:calc(100vh - 120px);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.5);" alt="${esc(doc.name)}">`;
+
+  } else if (isTxt) {
+    try {
+      const b64 = doc.data.split(',')[1];
+      const decoded = decodeURIComponent(escape(atob(b64)));
+      body.innerHTML = `<div class="viewer-text-wrap" id="txt-frame">${esc(decoded)}</div>`;
+    } catch(e) { body.innerHTML = unsupportedHTML(doc.name, 'TXT'); }
+
+  } else if (isCSV) {
+    try {
+      const b64 = doc.data.split(',')[1];
+      const decoded = decodeURIComponent(escape(atob(b64)));
+      const rows = decoded.trim().split('\n').map(r => r.split(','));
+      let tbl = '<table style="border-collapse:collapse;font-size:13px;width:100%;">';
+      rows.forEach((row, ri) => {
+        tbl += '<tr>';
+        row.forEach(cell => {
+          const tag = ri===0 ? 'th' : 'td';
+          const style = ri===0 ? 'background:#1a2e4a;color:#fff;padding:8px 12px;text-align:left;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);' : 'padding:7px 12px;border:1px solid #dde3ea;background:#fff;';
+          tbl += `<${tag} style="${style}">${esc(cell.trim())}</${tag}>`;
+        });
+        tbl += '</tr>';
+      });
+      tbl += '</table>';
+      body.innerHTML = `<div style="overflow:auto;max-width:100%;max-height:calc(100vh - 120px);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.4);">${tbl}</div>`;
+    } catch(e) { body.innerHTML = unsupportedHTML(doc.name, 'CSV'); }
+
+  } else if (isXLS) {
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('XLSX not loaded');
+      const b64 = doc.data.split(',')[1];
+      const wb = XLSX.read(b64, { type: 'base64' });
+      // Build tab selector + sheet table
+      const sheetNames = wb.SheetNames;
+      let tabsHtml = sheetNames.map((s,i) =>
+        `<button onclick="showXLSSheet(this,'${esc(s)}')" style="padding:6px 14px;border:none;border-radius:6px 6px 0 0;font-size:12px;font-weight:500;cursor:pointer;background:${i===0?'#fff':'#e8edf2'};color:${i===0?'#0f1e36':'#4a5568'};font-family:DM Sans,sans-serif;margin-right:2px;">${esc(s)}</button>`
+      ).join('');
+      body.innerHTML = `
+        <div style="width:100%;max-width:100%;display:flex;flex-direction:column;gap:0;">
+          <div style="background:#f0f4f8;padding:10px 16px 0;border-radius:10px 10px 0 0;display:flex;flex-wrap:wrap;gap:2px;" id="xlsx-tabs">${tabsHtml}</div>
+          <div id="xlsx-body" style="background:#fff;border-radius:0 0 10px 10px;overflow:auto;max-height:calc(100vh - 200px);box-shadow:0 8px 40px rgba(0,0,0,0.4);"></div>
+        </div>`;
+      window._xlsxWb = wb;
+      showXLSSheet(document.querySelector('#xlsx-tabs button'), sheetNames[0]);
+    } catch(e) { body.innerHTML = unsupportedHTML(doc.name, 'XLSX'); }
+
+  } else {
+    body.innerHTML = unsupportedHTML(doc.name, doc.name.split('.').pop().toUpperCase());
+  }
+}
+
+function showXLSSheet(btn, sheetName) {
+  const wb = window._xlsxWb;
+  if (!wb) return;
+  // Highlight active tab
+  document.querySelectorAll('#xlsx-tabs button').forEach(b => { b.style.background='#e8edf2'; b.style.color='#4a5568'; });
+  btn.style.background='#fff'; btn.style.color='#0f1e36';
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+  if (!rows.length) { document.getElementById('xlsx-body').innerHTML = '<div style="padding:24px;color:#888;font-size:13px;">Empty sheet</div>'; return; }
+  let tbl = '<table style="border-collapse:collapse;font-size:13px;width:100%;min-width:600px;">';
+  rows.forEach((row, ri) => {
+    tbl += '<tr>';
+    row.forEach(cell => {
+      const val = cell === null || cell === undefined ? '' : String(cell);
+      if (ri === 0) {
+        tbl += `<th style="background:#0f1e36;color:#fff;padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);position:sticky;top:0;">${esc(val)}</th>`;
+      } else {
+        const bg = ri%2===0?'#f9fafb':'#fff';
+        tbl += `<td style="padding:7px 14px;border:1px solid #e8edf2;background:${bg};white-space:nowrap;">${esc(val)}</td>`;
+      }
+    });
+    tbl += '</tr>';
+  });
+  tbl += '</table>';
+  document.getElementById('xlsx-body').innerHTML = tbl;
+}
+
+function unsupportedHTML(name, ext) {
+  return `<div class="viewer-unsupported">
+    <div class="big-icon">📋</div>
+    <h3 style="font-size:16px;color:#fff;margin-bottom:8px;">${esc(name)}</h3>
+    <p style="margin-bottom:20px;color:rgba(255,255,255,0.55);">${ext} files open directly in their app.<br>Click Download to open in Excel, Word etc.</p>
+    <button class="vbtn vbtn-primary" style="font-size:14px;padding:10px 28px;" onclick="downloadCurrentDoc()">⬇ Download & Open</button>
+  </div>`;
+}
+
+function closeDocViewer() {
+  document.getElementById('doc-viewer-overlay').classList.remove('open');
+  document.getElementById('viewer-body').innerHTML = '';
+  document.body.style.overflow = '';
+  viewerCurrentDocId = null;
+}
+
+function zoomViewer(delta) {
+  viewerZoom = Math.min(3, Math.max(0.3, viewerZoom + delta));
+  document.getElementById('zoom-label').textContent = Math.round(viewerZoom * 100) + '%';
+  const pdf = document.getElementById('pdf-frame');
+  const img = document.getElementById('img-frame');
+  if (pdf) pdf.style.transform = `scale(${viewerZoom})`;
+  if (img) img.style.transform = `scale(${viewerZoom})`;
+}
+
+function downloadCurrentDoc() {
+  if (viewerCurrentDocId) downloadDoc(viewerCurrentDocId);
+}
+
+// Close viewer on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDocViewer(); });
+
+// ── HELPERS ──
+function switchTab(btn, tabId) {
+  const allTabs = ['det-tab-stmt','det-tab-docs','det-tab-notes'];
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  allTabs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (id === tabId) ? '' : 'none';
+  });
+  if (tabId === 'det-tab-docs') loadClientDocs();
+  if (tabId === 'det-tab-notes') loadNotes();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(n) { return new Intl.NumberFormat('en-PK').format(Math.round(n)); }
+
+
+// ── MOBILE NAVIGATION ──
+function mobileNav(page, btn) {
+  navigate(page, null);
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// Override toggleSidebar to also show overlay
+const _origToggle = toggleSidebar;
+toggleSidebar = function() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+};
+
+// Show FAB only on clients page
+function updateFAB(page) {
+  const fab = document.getElementById('fab-btn');
+  if (!fab) return;
+  fab.style.display = (page === 'clients' || page === 'dashboard') ? 'flex' : 'none';
+}
+
+// Override navigate to also update bottom nav active state and FAB
+const _origNav = navigate;
+navigate = function(page, btn) {
+  _origNav(page, btn);
+  updateFAB(page);
+  // Sync bottom nav
+  const map = { dashboard:'bn-dashboard', clients:'bn-clients', statements:'bn-statements', documents:'bn-documents' };
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const target = map[page];
+  if (target) document.getElementById(target)?.classList.add('active');
+};
+
+// Install banner — show on mobile after 3s if not dismissed
+function showInstallBanner() {
+  if (localStorage.getItem('lp_install_dismissed')) return;
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  if (isMobile && !isStandalone) {
+    setTimeout(() => {
+      document.getElementById('install-banner')?.classList.add('show');
+    }, 3000);
+  }
+}
+
+function dismissInstall() {
+  localStorage.setItem('lp_install_dismissed', '1');
+  document.getElementById('install-banner')?.classList.remove('show');
+}
+
+// Call after login
+const _origEnterApp = enterApp;
+enterApp = async function() {
+  await _origEnterApp();
+  updateFAB('dashboard');
+  showInstallBanner();
+};
+
+// Swipe to close sidebar on mobile
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('open') && dx < -60) {
+    closeSidebarMobile();
+  }
+}, { passive: true });
+
+// Prevent double-tap zoom on buttons
+document.querySelectorAll('.btn, .bnav-item, .fab, .vbtn').forEach(el => {
+  el.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+});
+
+// ── INIT ──
+window.addEventListener('load', async () => {
+  // Check for existing session
+  const session = localStorage.getItem('lp_session');
+  if (session) {
+    try {
+      currentUser = JSON.parse(session);
+      await enterApp();
+    } catch(e) { localStorage.removeItem('lp_session'); }
+  }
+  setTimeout(() => {
+    const l = document.getElementById('loading');
+    l.style.opacity = '0';
+    setTimeout(() => { l.style.display = 'none'; if (!session) showScreen('screen-auth'); }, 400);
+  }, 1400);
+});
+</script>
+
+<!-- DOCUMENT VIEWER MODAL -->
+<div id="doc-viewer-overlay">
+  <div class="viewer-topbar">
+    <div class="viewer-filename" id="viewer-fname">Document</div>
+    <div class="viewer-meta" id="viewer-fmeta"></div>
+    <div class="viewer-zoom" id="viewer-zoom-ctrl" style="display:none;">
+      <button class="vbtn vbtn-ghost" style="padding:5px 10px;" onclick="zoomViewer(-0.15)">−</button>
+      <span id="zoom-label">100%</span>
+      <button class="vbtn vbtn-ghost" style="padding:5px 10px;" onclick="zoomViewer(0.15)">+</button>
+    </div>
+    <div class="viewer-actions">
+      <button class="vbtn vbtn-primary" id="viewer-dl-btn" onclick="downloadCurrentDoc()">⬇ Download</button>
+      <button class="vbtn vbtn-ghost" onclick="closeDocViewer()">✕ Close</button>
+    </div>
+  </div>
+  <div class="viewer-body" id="viewer-body">
+    <div class="viewer-unsupported">
+      <div class="big-icon">📄</div>
+      <h3>Loading…</h3>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden real file input -->
+<input type="file" id="real-file-input" multiple accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display:none" onchange="handleFileUpload(this)">
+</body>
+</html>
