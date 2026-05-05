@@ -619,7 +619,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
   background: #0f1e36;
   border-top: 1px solid rgba(255,255,255,0.1);
   padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-  justify-content: space-around;
+  justify-content: space-around; overflow-x: auto;
   align-items: center;
 }
 .bnav-item {
@@ -802,6 +802,280 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
 .ib-text strong { color:#fff; display:block; margin-bottom:2px; }
 .ib-btn { padding:8px 14px; background:var(--teal); color:#fff; border:none; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; }
 .ib-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:18px; cursor:pointer; padding:4px; }
+
+
+/* Excel sheet tabs */
+.xls-tab {
+  padding: 7px 16px; border: none; border-radius: 8px 8px 0 0;
+  font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  background: rgba(0,0,0,0.06); color: #4a5568;
+  font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.xls-tab.xls-tab-active { background: #fff; color: #0f1e36; box-shadow: 0 -2px 0 #1D9E75 inset; }
+.xls-tab:active { opacity: 0.75; }
+
+/* Mobile Excel table */
+@media (max-width: 768px) {
+  #xlsx-body table { font-size: 12px !important; }
+  #xlsx-body th, #xlsx-body td { padding: 7px 9px !important; }
+}
+
+
+/* ── EDITOR STYLES ── */
+.editor-toolbar {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 10px 14px; background: #f7f9fc;
+  border-bottom: 1px solid var(--border);
+}
+.etbtn {
+  padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: #fff;
+  color: var(--text2); font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.etbtn:hover { background: #f0f4f8; }
+.etbtn.active { background: #0f1e36; color: #fff; border-color: #0f1e36; }
+.etbtn-save { background: var(--teal); color: #fff; border-color: var(--teal); }
+.etbtn-save:hover { background: var(--teal-mid); }
+.etbtn-danger { background: #FCEBEB; color: var(--red); border-color: #f7c1c1; }
+
+/* Inline editable cells */
+.editable-cell {
+  outline: none; border-radius: 4px; padding: 2px 4px;
+  transition: background 0.15s;
+  min-width: 40px; display: inline-block;
+}
+.edit-mode .editable-cell:hover { background: rgba(29,158,117,0.08); cursor: text; }
+.edit-mode .editable-cell:focus { background: rgba(29,158,117,0.12); box-shadow: 0 0 0 2px rgba(29,158,117,0.3); }
+
+/* Edit mode indicator */
+.edit-mode-badge {
+  display: none; align-items: center; gap: 6px;
+  background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.25);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; font-weight: 500; color: var(--teal-mid);
+}
+.edit-mode-badge.show { display: flex; }
+
+/* Text editor area */
+.doc-text-editor {
+  width: 100%; min-height: 400px; padding: 20px 24px;
+  font-size: 14px; line-height: 1.75; font-family: 'DM Sans', sans-serif;
+  border: none; outline: none; resize: none;
+  background: #fff; color: var(--text);
+}
+.doc-text-editor:focus { background: #fafffe; }
+
+/* Excel cell editor */
+.xls-cell-edit {
+  background: #fff3cd !important;
+  outline: 2px solid var(--amber) !important;
+  border-radius: 3px;
+  min-width: 60px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: inherit;
+  padding: 4px 6px !important;
+  cursor: text;
+}
+
+/* Statement row add */
+.add-row-btn {
+  display: none; width: 100%; padding: 8px;
+  background: none; border: 1px dashed var(--border);
+  border-radius: 6px; color: var(--text3); font-size: 13px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s; margin-top: 4px;
+}
+.edit-mode .add-row-btn { display: block; }
+.add-row-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+
+/* Mobile editor adjustments */
+@media (max-width: 768px) {
+  .editor-toolbar { gap: 4px; padding: 8px 10px; }
+  .etbtn { padding: 7px 10px; font-size: 12px; }
+  .doc-text-editor { padding: 14px; font-size: 15px; min-height: 300px; }
+  .fs-table input[data-key] { width: 110px !important; font-size: 14px !important; }
+}
+
+
+/* ══════════════════════════════════
+   DEDICATED EDIT PAGE
+══════════════════════════════════ */
+.edit-page-header {
+  background: linear-gradient(135deg, #0f1e36, #1a2e4a);
+  border-radius: var(--radius); padding: 18px 20px;
+  margin-bottom: 16px; display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+.edit-page-title { font-family:'DM Serif Display',serif; font-size: 20px; color: #fff; }
+.edit-page-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+/* Edit type selector cards */
+.edit-type-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px;
+}
+.edit-type-card {
+  background: #fff; border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 16px 14px; text-align: center; cursor: pointer;
+  transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+}
+.edit-type-card:hover, .edit-type-card.selected {
+  border-color: var(--teal); background: var(--teal-light);
+}
+.edit-type-card .etc-icon { font-size: 26px; margin-bottom: 6px; }
+.edit-type-card .etc-label { font-size: 13px; font-weight: 600; color: var(--navy); }
+.edit-type-card .etc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Editor workspace */
+.editor-workspace {
+  background: #fff; border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.editor-topbar {
+  background: #0f1e36; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.editor-topbar-title { font-size: 14px; font-weight: 600; color: #fff; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.editor-action-bar {
+  background: #f7f9fc; border-bottom: 1px solid var(--border);
+  padding: 10px 14px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+.eabtn {
+  padding: 7px 13px; border-radius: 8px; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: #fff;
+  color: var(--text2); font-family: 'DM Sans',sans-serif; transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  white-space: nowrap;
+}
+.eabtn:active { opacity: 0.75; transform: scale(0.97); }
+.eabtn-green { background: var(--teal); color: #fff; border-color: var(--teal); }
+.eabtn-green:hover { background: var(--teal-mid); }
+.eabtn-blue { background: var(--blue); color: #fff; border-color: var(--blue); }
+.eabtn-red { background: var(--red-light); color: var(--red); }
+.eabtn-amber { background: var(--amber-light); color: var(--amber); border-color: #e5c97e; }
+
+/* Statement editor */
+.stmt-editor-table { width: 100%; border-collapse: collapse; }
+.stmt-editor-table th {
+  background: #0f1e36; color: #fff; font-size: 12px; font-weight: 600;
+  padding: 10px 14px; text-align: left; position: sticky; top: 0; z-index: 2;
+}
+.stmt-editor-table th:last-child { text-align: right; width: 160px; }
+.stmt-editor-table td { padding: 8px 14px; border-bottom: 1px solid #f0f2f5; font-size: 13.5px; }
+.stmt-editor-table tr.se-section td {
+  background: #f0f4f8; font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.8px; color: var(--navy); padding: 8px 14px;
+}
+.stmt-editor-table tr.se-total td {
+  background: #f7f9fc; font-weight: 700; font-size: 14px;
+  border-top: 2px solid var(--border); color: var(--navy);
+}
+.stmt-editor-table tr.se-total td:last-child { color: var(--teal); }
+.stmt-editor-table tr:hover td { background: #fafbfc; }
+.se-input {
+  width: 100%; max-width: 150px; padding: 6px 10px; border: 1.5px solid var(--border);
+  border-radius: 7px; font-size: 14px; text-align: right;
+  font-family: 'DM Sans',sans-serif; outline: none; color: var(--text);
+  transition: border 0.15s; -webkit-appearance: none;
+}
+.se-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.se-label-input {
+  border: none; border-bottom: 1.5px solid transparent; padding: 4px 2px;
+  font-size: 13.5px; font-family: 'DM Sans',sans-serif; color: var(--text);
+  background: transparent; outline: none; width: 100%; min-width: 120px;
+  transition: border 0.15s;
+}
+.se-label-input:focus { border-bottom-color: var(--teal); background: #f7faf9; border-radius: 4px 4px 0 0; }
+.se-del-btn {
+  padding: 3px 7px; border: none; background: none; color: #ccc;
+  cursor: pointer; font-size: 14px; border-radius: 4px; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.se-del-btn:hover, .se-del-btn:active { color: var(--red); background: var(--red-light); }
+
+/* Excel editor */
+.xls-editor-wrap { overflow: auto; -webkit-overflow-scrolling: touch; }
+.xls-editor-table { border-collapse: collapse; font-size: 13px; }
+.xls-editor-table th {
+  background: #0f1e36; color: #fff; padding: 9px 12px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+  position: sticky; top: 0; z-index: 2; min-width: 80px;
+  text-align: center; border: 1px solid rgba(255,255,255,0.1);
+}
+.xls-editor-table td {
+  padding: 0; border: 1px solid #e0e5ec; min-width: 80px; max-width: 200px;
+  background: #fff; vertical-align: middle;
+}
+.xls-editor-table tr:nth-child(even) td { background: #f9fafb; }
+.xls-cell-inp {
+  width: 100%; padding: 7px 9px; border: none; outline: none;
+  font-family: 'DM Sans',sans-serif; font-size: 13px; background: transparent;
+  min-width: 80px;
+}
+.xls-cell-inp:focus {
+  background: #fff9e6; outline: 2px solid var(--amber); outline-offset: -2px;
+  position: relative; z-index: 1;
+}
+.xls-row-num {
+  background: #f0f4f8; color: var(--text3); font-size: 11px; font-weight: 600;
+  padding: 7px 8px; text-align: center; border: 1px solid #e0e5ec;
+  min-width: 32px; position: sticky; left: 0; z-index: 1;
+}
+
+/* Sheet tabs */
+.xls-sheet-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 10px 14px 0; background: #f0f4f8; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.xls-sheet-tabs::-webkit-scrollbar { display: none; }
+.xls-stab {
+  padding: 7px 16px; border: 1px solid #dde3ea; border-radius: 8px 8px 0 0;
+  font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  background: #e8edf2; color: #4a5568; font-family: 'DM Sans',sans-serif;
+  border-bottom: none; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.xls-stab.active { background: #fff; color: #0f1e36; font-weight: 600; }
+
+/* Text/CSV editor */
+.text-edit-area {
+  width: 100%; min-height: 420px; padding: 18px 20px;
+  font-size: 14px; line-height: 1.8; font-family: 'DM Sans',sans-serif;
+  border: none; outline: none; resize: vertical;
+  background: #fff; color: var(--text); tab-size: 2;
+}
+.text-edit-area:focus { background: #fafffe; }
+
+/* Select client bar */
+.edit-client-bar {
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 14px;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.edit-client-bar label { font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+
+/* Unsaved indicator */
+.unsaved-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--amber);
+  display: inline-block; margin-right: 4px; animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .edit-type-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .edit-type-card { padding: 12px 8px; }
+  .edit-type-card .etc-icon { font-size: 22px; }
+  .edit-type-card .etc-label { font-size: 12px; }
+  .edit-type-card .etc-sub { display: none; }
+  .editor-action-bar { gap: 5px; padding: 8px 10px; }
+  .eabtn { padding: 7px 10px; font-size: 12px; }
+  .stmt-editor-table th, .stmt-editor-table td { padding: 8px 10px; }
+  .se-input { max-width: 120px; font-size: 13px; }
+  .text-edit-area { font-size: 15px; min-height: 300px; }
+}
 
 </style>
 </head>
@@ -1068,11 +1342,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
             </div>
 
             <div id="det-tab-stmt">
-              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
                 <select class="form-input" style="width:auto;" id="stmt-fy"><option>FY 2024-25</option><option>FY 2023-24</option><option>FY 2022-23</option></select>
-                <button class="btn btn-ghost" onclick="showStmt('income')">Income Statement</button>
-                <button class="btn btn-ghost" onclick="showStmt('balance')">Balance Sheet</button>
-                <button class="btn btn-ghost" onclick="showStmt('cashflow')">Cash Flow</button>
+                <button class="btn btn-ghost" id="stmt-btn-income" onclick="showStmt('income')">📊 Income</button>
+                <button class="btn btn-ghost" id="stmt-btn-balance" onclick="showStmt('balance')">🏦 Balance</button>
+                <button class="btn btn-ghost" id="stmt-btn-cashflow" onclick="showStmt('cashflow')">💰 Cash Flow</button>
+                <div class="edit-mode-badge" id="stmt-edit-badge">✏️ Edit Mode ON</div>
               </div>
               <div id="stmt-content" class="card">
                 <div class="empty-state" style="padding:32px;"><div class="empty-icon">📄</div><p>Select a statement type above to view or enter data</p></div>
@@ -1208,6 +1483,50 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
         </div>
       </section>
 
+      <!-- ══ EDIT PAGE ══ -->
+      <section class="section" id="sec-edit">
+
+        <div class="edit-page-header">
+          <div>
+            <div class="edit-page-title">✏️ Edit Workspace</div>
+            <div class="edit-page-sub">Edit statements, Excel files, and documents — save directly to client</div>
+          </div>
+          <div id="edit-unsaved" style="display:none;">
+            <span class="unsaved-dot"></span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.6);">Unsaved changes</span>
+          </div>
+        </div>
+
+        <!-- Client + Type selector -->
+        <div class="edit-client-bar">
+          <label>CLIENT</label>
+          <select class="form-input" id="edit-client-sel" style="flex:1;min-width:140px;" onchange="onEditClientChange()">
+            <option value="">— Select Client —</option>
+          </select>
+          <label>EDIT</label>
+          <select class="form-input" id="edit-type-sel" style="flex:1;min-width:130px;" onchange="onEditTypeChange()">
+            <option value="">— Select Type —</option>
+            <option value="income">📊 Income Statement</option>
+            <option value="balance">🏦 Balance Sheet</option>
+            <option value="cashflow">💰 Cash Flow</option>
+            <option value="excel">📗 Excel Document</option>
+            <option value="csv">📋 CSV File</option>
+            <option value="txt">📝 Text File</option>
+          </select>
+          <button class="eabtn eabtn-green" onclick="loadEditContent()" style="flex-shrink:0;">Load →</button>
+        </div>
+
+        <!-- Editor area -->
+        <div id="edit-workspace">
+          <div class="empty-state" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:48px 20px;">
+            <div class="empty-icon">✏️</div>
+            <p style="font-size:14px;font-weight:500;color:var(--text2);">Select a client and content type above, then tap Load</p>
+            <p style="font-size:12px;color:var(--text3);margin-top:6px;">You can edit financial statements, Excel sheets, and text files</p>
+          </div>
+        </div>
+
+      </section>
+
     </div>
   </div>
 
@@ -1231,6 +1550,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--page-bg); color: va
     <button class="bnav-item" id="bn-documents" onclick="mobileNav('documents',this)">
       <div class="bni-wrap"><div class="bni">📁</div></div>
       <span>Docs</span>
+    </button>
+    <button class="bnav-item" id="bn-edit" onclick="mobileNav('edit',this)">
+      <div class="bni-wrap"><div class="bni">✏️</div></div>
+      <span>Edit</span>
     </button>
     <button class="bnav-item" id="bn-more" onclick="toggleSidebarMobile()">
       <div class="bni-wrap"><div class="bni">☰</div></div>
@@ -1594,22 +1917,96 @@ const incomeTemplate = [
   {label:'Net Profit After Tax', total:true, formula:(d)=>{ const p=((+d.sales||0)+(+d.other_inc||0)-(+d.open_stock||0)-(+d.purchases||0)+(+d.close_stock||0)-(+d.salaries||0)-(+d.rent||0)-(+d.utilities||0)-(+d.depreciation||0)-(+d.other_exp||0)); return p>0?p*0.71:p; }, highlight:true}
 ];
 
+let _stmtEditMode = false;
+let _currentStmtType = null;
+
+function toggleStmtEditMode() {
+  _stmtEditMode = !_stmtEditMode;
+  const badge = document.getElementById('stmt-edit-badge');
+  if (badge) { badge.classList.toggle('show', _stmtEditMode); }
+  if (_currentStmtType) showStmt(_currentStmtType);
+}
+
+async function addStmtRow(type, section) {
+  const label = prompt('Enter row label (e.g. "Miscellaneous Income"):');
+  if (!label) return;
+  const key = `stmt:${currentClientId}:${type}`;
+  const data = await loadData(key, {});
+  const rowKey = 'custom_' + Date.now();
+  data[rowKey] = 0;
+  data[rowKey + '_label'] = label;
+  data[rowKey + '_section'] = section;
+  await saveData(key, data);
+  showStmt(type);
+  showToast('✅ Row added');
+}
+
+async function deleteStmtRow(type, rowKey) {
+  if (!confirm('Delete this row?')) return;
+  const key = `stmt:${currentClientId}:${type}`;
+  const data = await loadData(key, {});
+  delete data[rowKey]; delete data[rowKey+'_label']; delete data[rowKey+'_section'];
+  await saveData(key, data);
+  showStmt(type);
+  showToast('Row deleted');
+}
+
 async function showStmt(type) {
   if (!currentClientId) return;
+  _currentStmtType = type;
+  // Highlight active button
+  ['income','balance','cashflow'].forEach(t => {
+    const b = document.getElementById('stmt-btn-'+t);
+    if (b) b.className = t===type ? 'btn btn-primary' : 'btn btn-ghost';
+  });
   const key = `stmt:${currentClientId}:${type}`;
   const data = await loadData(key, {});
   const names = { income:'Income Statement', balance:'Balance Sheet', cashflow:'Cash Flow Statement' };
-  let html = `<div class="card-header"><span class="card-title">${names[type]}</span><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="saveStmt('${type}')">💾 Save</button></div></div>`;
+  const editIcon = _stmtEditMode ? '👁 View Mode' : '✏️ Edit Mode';
+  let html = `<div class="card-header">
+    <span class="card-title">${names[type]}</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn ${_stmtEditMode?'btn-ghost':'btn-ghost'}" style="font-size:12px;padding:5px 12px;" onclick="toggleStmtEditMode()">${editIcon}</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="saveStmt('${type}')">💾 Save</button>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="printStmt()">🖨 Print</button>
+    </div>
+  </div>`;
   if (type === 'income') {
-    html += `<table class="fs-table"><thead><tr><th>Item</th><th style="text-align:right;width:180px;">Amount (PKR)</th></tr></thead><tbody>`;
+    const editClass = _stmtEditMode ? ' edit-mode' : '';
+    html += `<table class="fs-table${editClass}"><thead><tr><th>Item</th><th style="text-align:right;width:${_stmtEditMode?'200px':'160px'};">Amount (PKR)</th>${_stmtEditMode?'<th style="width:36px;"></th>':''}</tr></thead><tbody>`;
+    let lastSection = '';
     for (const row of incomeTemplate) {
-      if (row.section) { html += `<tr class="section-head"><td colspan="2">${row.label}</td></tr>`; continue; }
+      if (row.section) {
+        lastSection = row.label;
+        html += `<tr class="section-head"><td colspan="${_stmtEditMode?3:2}">${row.label}</td></tr>`;
+        continue;
+      }
       if (row.total || row.formula) {
         const val = row.total && row.keys ? row.keys.reduce((a,k)=>a+(+data[k]||0),0) : row.formula(data);
-        html += `<tr class="total-row${row.highlight?' style="color:var(--teal);"':''}"><td>${row.label}</td><td style="color:${row.highlight?'var(--teal)':'inherit'}">${fmt(val)}</td></tr>`;
+        html += `<tr class="total-row"><td>${row.label}</td><td style="text-align:right;color:${row.highlight?'var(--teal)':'inherit'}">${fmt(val)}</td>${_stmtEditMode?'<td></td>':''}</tr>`;
       } else {
-        html += `<tr><td>${row.label}</td><td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;text-align:right;width:140px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${row.key}" value="${data[row.key]||''}" oninput="liveUpdateStmt(this,'${type}')" placeholder="0"></td></tr>`;
+        if (_stmtEditMode) {
+          html += `<tr><td contenteditable="true" class="editable-cell" style="font-size:13.5px;">${row.label}</td>
+            <td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:right;width:130px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${row.key}" value="${data[row.key]||''}" oninput="liveUpdateStmt(this,'income')" placeholder="0"></td>
+            <td></td></tr>`;
+        } else {
+          html += `<tr><td>${row.label}</td><td style="text-align:right;font-weight:500;">${data[row.key]?fmt(+data[row.key]):'—'}</td></tr>`;
+        }
       }
+    }
+    // Custom rows
+    Object.keys(data).filter(k => k.startsWith('custom_') && !k.endsWith('_label') && !k.endsWith('_section')).forEach(k => {
+      const label = data[k+'_label'] || 'Custom Row';
+      if (_stmtEditMode) {
+        html += `<tr style="background:#fffdf0;"><td contenteditable="true" class="editable-cell">${esc(label)}</td>
+          <td><input type="number" style="border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:right;width:130px;font-family:'DM Sans',sans-serif;font-size:13px;" data-key="${k}" value="${data[k]||''}" oninput="liveUpdateStmt(this,'income')" placeholder="0"></td>
+          <td><button onclick="deleteStmtRow('income','${k}')" style="border:none;background:none;color:#A32D2D;cursor:pointer;font-size:14px;padding:2px 6px;">✕</button></td></tr>`;
+      } else {
+        html += `<tr><td>${esc(label)}</td><td style="text-align:right;">${data[k]?fmt(+data[k]):'—'}</td></tr>`;
+      }
+    });
+    if (_stmtEditMode) {
+      html += `<tr><td colspan="3"><button class="add-row-btn" onclick="addStmtRow('income','Revenue')" style="display:block;">+ Add Custom Row</button></td></tr>`;
     }
     html += `</tbody></table>`;
   } else if (type === 'balance') {
@@ -1660,7 +2057,7 @@ async function loadClientDocs() {
   el.innerHTML = docs.map(d => {
     const icon = d.name.match(/\.pdf$/i)?'📄':d.name.match(/\.(xlsx?|csv)$/i)?'📊':d.name.match(/\.(docx?|txt)$/i)?'📝':d.name.match(/\.(png|jpe?g|gif)$/i)?'🖼️':'📋';
     const hasData = !!d.data;
-    const canView = hasData;
+    const canView = hasData; // All file types viewable
     return `<div class="doc-item" style="cursor:${canView?'pointer':'default'}" onclick="${canView?`openDocViewer('${d.id}')`:''}" title="${canView?'Click to view':''}">
       <div style="font-size:22px;">${icon}</div>
       <div style="flex:1;min-width:0;">
@@ -1933,53 +2330,90 @@ async function openDocViewer(docId) {
 
   } else if (isXLS) {
     try {
-      if (typeof XLSX === 'undefined') throw new Error('XLSX not loaded');
+      if (typeof XLSX === 'undefined') throw new Error('XLSX library not loaded');
       const b64 = doc.data.split(',')[1];
       const wb = XLSX.read(b64, { type: 'base64' });
-      // Build tab selector + sheet table
+      window._xlsxWb = wb;
       const sheetNames = wb.SheetNames;
-      let tabsHtml = sheetNames.map((s,i) =>
-        `<button onclick="showXLSSheet(this,'${esc(s)}')" style="padding:6px 14px;border:none;border-radius:6px 6px 0 0;font-size:12px;font-weight:500;cursor:pointer;background:${i===0?'#fff':'#e8edf2'};color:${i===0?'#0f1e36':'#4a5568'};font-family:DM Sans,sans-serif;margin-right:2px;">${esc(s)}</button>`
+      const isMobile = window.innerWidth <= 768;
+      // Sheet tabs
+      const tabsHtml = sheetNames.map((s, i) =>
+        `<button class="xls-tab${i===0?' xls-tab-active':''}" onclick="showXLSSheet(this,'${esc(s)}')">${esc(s)}</button>`
       ).join('');
       body.innerHTML = `
-        <div style="width:100%;max-width:100%;display:flex;flex-direction:column;gap:0;">
-          <div style="background:#f0f4f8;padding:10px 16px 0;border-radius:10px 10px 0 0;display:flex;flex-wrap:wrap;gap:2px;" id="xlsx-tabs">${tabsHtml}</div>
-          <div id="xlsx-body" style="background:#fff;border-radius:0 0 10px 10px;overflow:auto;max-height:calc(100vh - 200px);box-shadow:0 8px 40px rgba(0,0,0,0.4);"></div>
+        <div style="width:100%;display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);max-width:${isMobile?'100%':'960px'};">
+          ${sheetNames.length > 1 ? `<div id="xlsx-tabs" style="display:flex;overflow-x:auto;background:#f0f4f8;padding:10px 12px 0;gap:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;">${tabsHtml}</div>` : ''}
+          <div style="padding:${isMobile?'10px':'14px'};background:#f7f9fc;border-bottom:1px solid #e8edf2;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div id="xls-sheet-info" style="font-size:12px;color:#4a5568;"></div>
+            <div style="display:flex;gap:6px;">
+              <button class="vbtn vbtn-ghost" style="font-size:12px;padding:5px 10px;" onclick="xlsZoom(-1)">A−</button>
+              <button class="vbtn vbtn-ghost" style="font-size:12px;padding:5px 10px;" onclick="xlsZoom(1)">A+</button>
+            </div>
+          </div>
+          <div id="xlsx-body" style="overflow:auto;-webkit-overflow-scrolling:touch;max-height:${isMobile?'calc(100vh - 220px)':'calc(100vh - 180px)'};"></div>
         </div>`;
-      window._xlsxWb = wb;
-      showXLSSheet(document.querySelector('#xlsx-tabs button'), sheetNames[0]);
-    } catch(e) { body.innerHTML = unsupportedHTML(doc.name, 'XLSX'); }
+      showXLSSheet(document.querySelector('#xlsx-tabs button') || {}, sheetNames[0]);
+    } catch(e) {
+      console.error('Excel error:', e);
+      body.innerHTML = unsupportedHTML(doc.name, 'XLSX');
+    }
 
   } else {
     body.innerHTML = unsupportedHTML(doc.name, doc.name.split('.').pop().toUpperCase());
   }
 }
 
+let _xlsFontSize = 13;
+
 function showXLSSheet(btn, sheetName) {
   const wb = window._xlsxWb;
   if (!wb) return;
-  // Highlight active tab
-  document.querySelectorAll('#xlsx-tabs button').forEach(b => { b.style.background='#e8edf2'; b.style.color='#4a5568'; });
-  btn.style.background='#fff'; btn.style.color='#0f1e36';
+  // Highlight tab
+  document.querySelectorAll('.xls-tab').forEach(b => b.classList.remove('xls-tab-active'));
+  if (btn && btn.classList) btn.classList.add('xls-tab-active');
   const ws = wb.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
-  if (!rows.length) { document.getElementById('xlsx-body').innerHTML = '<div style="padding:24px;color:#888;font-size:13px;">Empty sheet</div>'; return; }
-  let tbl = '<table style="border-collapse:collapse;font-size:13px;width:100%;min-width:600px;">';
+  const infoEl = document.getElementById('xls-sheet-info');
+  if (!rows.length) {
+    document.getElementById('xlsx-body').innerHTML = '<div style="padding:24px;color:#888;text-align:center;font-size:13px;">This sheet is empty</div>';
+    if (infoEl) infoEl.textContent = sheetName + ' — empty';
+    return;
+  }
+  const isMobile = window.innerWidth <= 768;
+  const fs = _xlsFontSize;
+  const pad = isMobile ? '7px 10px' : '9px 14px';
+  if (infoEl) infoEl.textContent = `${sheetName} — ${rows.length - 1} rows × ${(rows[0]||[]).length} columns`;
+  let tbl = `<table style="border-collapse:collapse;font-size:${fs}px;width:100%;min-width:${isMobile?'400px':'600px'};">`;
+  // Find max cols
+  const maxCols = Math.max(...rows.map(r => r.length));
   rows.forEach((row, ri) => {
+    // Skip completely empty rows
+    if (row.every(c => c === '' || c === null || c === undefined)) return;
     tbl += '<tr>';
-    row.forEach(cell => {
-      const val = cell === null || cell === undefined ? '' : String(cell);
+    for (let ci = 0; ci < maxCols; ci++) {
+      const cell = row[ci];
+      const val = (cell === null || cell === undefined || cell === '') ? '' : String(cell);
+      const isNum = val !== '' && !isNaN(val.replace(/,/g,''));
       if (ri === 0) {
-        tbl += `<th style="background:#0f1e36;color:#fff;padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);position:sticky;top:0;">${esc(val)}</th>`;
+        tbl += `<th style="background:#0f1e36;color:#fff;padding:${pad};text-align:left;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,0.12);position:sticky;top:0;z-index:2;">${esc(val)||'&nbsp;'}</th>`;
       } else {
-        const bg = ri%2===0?'#f9fafb':'#fff';
-        tbl += `<td style="padding:7px 14px;border:1px solid #e8edf2;background:${bg};white-space:nowrap;">${esc(val)}</td>`;
+        const bg = ri % 2 === 0 ? '#f9fafb' : '#fff';
+        const align = isNum ? 'right' : 'left';
+        const fw = (val.toLowerCase&&val.toLowerCase()==='total'||val.toLowerCase&&val.toLowerCase().includes('total')) ? '600' : '400';
+        tbl += `<td style="padding:${pad};border:1px solid #e8edf2;background:${bg};white-space:nowrap;text-align:${align};font-weight:${fw};">${esc(val)||'&nbsp;'}</td>`;
       }
-    });
+    }
     tbl += '</tr>';
   });
   tbl += '</table>';
-  document.getElementById('xlsx-body').innerHTML = tbl;
+  const body = document.getElementById('xlsx-body');
+  if (body) body.innerHTML = tbl;
+  window._currentSheet = sheetName;
+}
+
+function xlsZoom(dir) {
+  _xlsFontSize = Math.min(20, Math.max(9, _xlsFontSize + dir * 2));
+  if (window._currentSheet) showXLSSheet({classList:{add:()=>{},remove:()=>{}}}, window._currentSheet);
 }
 
 function unsupportedHTML(name, ext) {
@@ -1996,6 +2430,138 @@ function closeDocViewer() {
   document.getElementById('viewer-body').innerHTML = '';
   document.body.style.overflow = '';
   viewerCurrentDocId = null;
+  _docEditMode = false;
+  window._xlsxWb = null;
+}
+
+// ── PRINT STATEMENT ──
+function printStmt() {
+  const content = document.getElementById('stmt-content');
+  if (!content) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Financial Statement</title>
+    <style>body{font-family:Arial,sans-serif;padding:30px;font-size:13px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;}
+    th{background:#0f1e36;color:#fff;} tr:nth-child(even){background:#f9f9f9;}
+    .section-head td{background:#e8edf2;font-weight:bold;text-transform:uppercase;font-size:11px;}
+    .total-row td{font-weight:bold;border-top:2px solid #333;background:#f5f5f5;}
+    h2{color:#0f1e36;margin-bottom:20px;} @media print{button{display:none;}}
+    </style></head><body>${content.innerHTML}
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
+// ── DOC EDITOR MODE ──
+let _docEditMode = false;
+let _editingDocId = null;
+let _editingDocName = null;
+
+async function toggleDocEdit() {
+  const doc = await getViewerDoc();
+  if (!doc) return;
+  _docEditMode = !_docEditMode;
+  const btn = document.getElementById('viewer-edit-btn');
+  if (btn) btn.textContent = _docEditMode ? '✅ Done Editing' : '✏️ Edit';
+  if (_docEditMode) {
+    openDocEditor(doc);
+  } else {
+    await saveDocEdits(doc);
+    openDocViewer(_editingDocId);
+  }
+}
+
+async function getViewerDoc() {
+  if (!viewerCurrentDocId || !currentClientId) return null;
+  const docs = await loadData(`docs:${currentClientId}`, []);
+  return docs.find(d => d.id === viewerCurrentDocId);
+}
+
+async function openDocEditor(doc) {
+  _editingDocId = doc.id;
+  _editingDocName = doc.name;
+  const body = document.getElementById('viewer-body');
+  const isCSV = doc.name.match(/\.csv$/i);
+  const isTxt = doc.name.match(/\.txt$/i);
+  const isXLS = doc.name.match(/\.(xlsx?|xls)$/i);
+
+  if (isTxt || isCSV) {
+    try {
+      const b64 = doc.data.split(',')[1];
+      const decoded = decodeURIComponent(escape(atob(b64)));
+      body.innerHTML = `
+        <div style="width:100%;max-width:860px;display:flex;flex-direction:column;gap:0;">
+          <div class="editor-toolbar">
+            <span style="font-size:12px;color:var(--text3);">Editing: ${esc(doc.name)}</span>
+            <button class="etbtn" onclick="insertText('\n')">↵ New Line</button>
+            <button class="etbtn" onclick="document.getElementById('txt-edit-area').value=''">🗑 Clear</button>
+          </div>
+          <textarea id="txt-edit-area" class="doc-text-editor" spellcheck="false">${esc(decoded)}</textarea>
+        </div>`;
+    } catch(e) { showToast('Cannot edit this file'); _docEditMode = false; }
+  } else if (isXLS) {
+    showToast('💡 Tap any cell to edit it directly');
+    // Make cells editable
+    document.querySelectorAll('#xlsx-body td').forEach(td => {
+      td.contentEditable = 'true';
+      td.classList.add('xls-cell-edit');
+      td.style.cursor = 'text';
+    });
+    document.querySelectorAll('#xlsx-body th').forEach(th => {
+      th.contentEditable = 'true';
+      th.style.cursor = 'text';
+      th.style.background = '#1a3a5c';
+    });
+  } else {
+    showToast('💡 Download to edit PDF/Word files in their app');
+    downloadCurrentDoc();
+    _docEditMode = false;
+    const btn = document.getElementById('viewer-edit-btn');
+    if (btn) btn.textContent = '✏️ Edit';
+  }
+}
+
+async function saveDocEdits(doc) {
+  if (!_editingDocId || !currentClientId) return;
+  const isXLS = doc.name.match(/\.(xlsx?|xls)$/i);
+  const isTxt = doc.name.match(/\.(txt|csv)$/i);
+
+  if (isTxt) {
+    const area = document.getElementById('txt-edit-area');
+    if (!area) return;
+    const newText = area.value;
+    // Re-encode as base64
+    const encoded = btoa(unescape(encodeURIComponent(newText)));
+    const mimeType = doc.name.endsWith('.csv') ? 'text/csv' : 'text/plain';
+    const newData = `data:${mimeType};base64,${encoded}`;
+    const docs = await loadData(`docs:${currentClientId}`, []);
+    const idx = docs.findIndex(d => d.id === _editingDocId);
+    if (idx >= 0) { docs[idx].data = newData; await saveData(`docs:${currentClientId}`, docs); }
+    showToast('✅ File saved');
+  } else if (isXLS && window._xlsxWb) {
+    try {
+      // Read edited cell values back into workbook
+      const sheetName = window._currentSheet || window._xlsxWb.SheetNames[0];
+      const ws = window._xlsxWb.Sheets[sheetName];
+      const rows = document.querySelectorAll('#xlsx-body tr');
+      rows.forEach((tr, ri) => {
+        const cells = tr.querySelectorAll('td, th');
+        cells.forEach((td, ci) => {
+          const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+          if (ws[addr]) ws[addr].v = td.textContent.trim();
+          else if (td.textContent.trim()) ws[addr] = { v: td.textContent.trim(), t: 's' };
+        });
+      });
+      // Write back to base64
+      const wbout = XLSX.write(window._xlsxWb, { bookType: 'xlsx', type: 'base64' });
+      const newData = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
+      const docs = await loadData(`docs:${currentClientId}`, []);
+      const idx = docs.findIndex(d => d.id === _editingDocId);
+      if (idx >= 0) { docs[idx].data = newData; await saveData(`docs:${currentClientId}`, docs); }
+      showToast('✅ Excel saved');
+    } catch(e) { showToast('❌ Could not save Excel — ' + e.message); }
+  }
+  await loadClientDocs();
 }
 
 function zoomViewer(delta) {
@@ -2122,6 +2688,497 @@ document.addEventListener('touchend', e => {
   if (sidebar && sidebar.classList.contains('open') && dx < -50) closeSidebarMobile();
 }, { passive: true });
 
+
+// ══════════════════════════════════════════════════
+// EDIT WORKSPACE
+// ══════════════════════════════════════════════════
+let _editClientId = null;
+let _editType = null;
+let _editDocId = null;
+let _editXlsWb = null;
+let _editCurrentSheet = null;
+let _editHasChanges = false;
+
+function markUnsaved() {
+  _editHasChanges = true;
+  document.getElementById('edit-unsaved').style.display = 'flex';
+}
+
+function markSaved() {
+  _editHasChanges = false;
+  document.getElementById('edit-unsaved').style.display = 'none';
+}
+
+async function populateEditClientSelect() {
+  const clients = await loadClients();
+  const sel = document.getElementById('edit-client-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select Client —</option>' +
+    clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
+
+function onEditClientChange() {
+  _editClientId = document.getElementById('edit-client-sel').value || null;
+  document.getElementById('edit-workspace').innerHTML = `
+    <div class="empty-state" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:40px 20px;">
+      <div class="empty-icon" style="font-size:28px;">👆</div>
+      <p style="font-size:14px;color:var(--text2);">Now select content type and tap Load</p>
+    </div>`;
+}
+
+function onEditTypeChange() {
+  _editType = document.getElementById('edit-type-sel').value || null;
+  // If excel/csv/txt — show doc picker
+  if (['excel','csv','txt'].includes(_editType) && _editClientId) {
+    loadEditDocList();
+  }
+}
+
+async function loadEditDocList() {
+  if (!_editClientId) return;
+  const docs = await loadData(`docs:${_editClientId}`, []);
+  const extMap = { excel: /\.(xlsx?|xls)$/i, csv: /\.csv$/i, txt: /\.txt$/i };
+  const pattern = extMap[_editType];
+  const filtered = docs.filter(d => pattern && pattern.test(d.name) && d.data);
+  const ws = document.getElementById('edit-workspace');
+  if (!filtered.length) {
+    ws.innerHTML = `<div class="empty-state" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:40px 20px;">
+      <div class="empty-icon">📂</div>
+      <p style="font-size:14px;color:var(--text2);">No ${_editType.toUpperCase()} files found for this client</p>
+      <p style="font-size:12px;color:var(--text3);margin-top:6px;">Upload a file in the Documents tab first</p>
+    </div>`;
+    return;
+  }
+  ws.innerHTML = `<div class="card"><div class="card-header"><span class="card-title">Select a file to edit</span></div>
+    <div style="padding:12px;">` +
+    filtered.map(d => `
+      <div class="doc-item" onclick="loadFileEditor('${d.id}')" style="cursor:pointer;">
+        <div style="font-size:22px;">${d.name.match(/\.csv$/i)?'📋':d.name.match(/\.txt$/i)?'📝':'📗'}</div>
+        <div><div style="font-weight:500;font-size:13.5px;">${esc(d.name)}</div>
+        <div style="font-size:12px;color:var(--text3);">${d.size} · ${new Date(d.at).toLocaleDateString('en-PK')}</div></div>
+        <div style="margin-left:auto;"><button class="eabtn eabtn-green" style="pointer-events:none;">Edit →</button></div>
+      </div>`).join('') +
+    '</div></div>';
+}
+
+async function loadEditContent() {
+  const type = document.getElementById('edit-type-sel').value;
+  const clientId = document.getElementById('edit-client-sel').value;
+  if (!clientId) { showToast('⚠️ Please select a client'); return; }
+  if (!type) { showToast('⚠️ Please select a content type'); return; }
+  _editClientId = clientId;
+  _editType = type;
+
+  if (type === 'income' || type === 'balance' || type === 'cashflow') {
+    await loadStmtEditor(type, clientId);
+  } else if (['excel','csv','txt'].includes(type)) {
+    await loadEditDocList();
+  }
+}
+
+// ── STATEMENT EDITOR ──
+async function loadStmtEditor(type, clientId) {
+  const data = await loadData(`stmt:${clientId}:${type}`, {});
+  const names = { income:'Income Statement', balance:'Balance Sheet', cashflow:'Cash Flow Statement' };
+  const ws = document.getElementById('edit-workspace');
+
+  let rows = [];
+  if (type === 'income') {
+    rows = [
+      { section: true, label: 'Revenue' },
+      { key: 'sales', label: 'Sales Revenue' },
+      { key: 'other_inc', label: 'Other Income' },
+      { total: true, label: 'Total Revenue', keys: ['sales','other_inc'] },
+      { section: true, label: 'Cost of Goods Sold' },
+      { key: 'open_stock', label: 'Opening Stock' },
+      { key: 'purchases', label: 'Purchases' },
+      { key: 'close_stock', label: 'Closing Stock' },
+      { section: true, label: 'Operating Expenses' },
+      { key: 'salaries', label: 'Salaries & Wages' },
+      { key: 'rent', label: 'Rent' },
+      { key: 'utilities', label: 'Utilities' },
+      { key: 'depreciation', label: 'Depreciation' },
+      { key: 'other_exp', label: 'Other Expenses' },
+    ];
+  } else if (type === 'balance') {
+    rows = [
+      { section: true, label: 'Assets' },
+      { key: 'a_cash', label: 'Cash & Bank' },
+      { key: 'a_recv', label: 'Accounts Receivable' },
+      { key: 'a_inv', label: 'Inventory' },
+      { key: 'a_fixed', label: 'Fixed Assets' },
+      { section: true, label: 'Liabilities' },
+      { key: 'l_pay', label: 'Accounts Payable' },
+      { key: 'l_loan', label: 'Bank Loans' },
+      { section: true, label: 'Equity' },
+      { key: 'e_capital', label: 'Share Capital' },
+      { key: 'e_retained', label: 'Retained Earnings' },
+    ];
+  } else {
+    rows = [
+      { section: true, label: 'Operating Activities' },
+      { key: 'cf_net', label: 'Net Income' },
+      { key: 'cf_depr', label: 'Depreciation Add-back' },
+      { key: 'cf_wc', label: 'Changes in Working Capital' },
+      { section: true, label: 'Investing Activities' },
+      { key: 'cf_capex', label: 'Capital Expenditures' },
+      { section: true, label: 'Financing Activities' },
+      { key: 'cf_loan', label: 'Loan Proceeds' },
+      { key: 'cf_div', label: 'Dividend Paid' },
+    ];
+  }
+
+  // Add custom rows
+  Object.keys(data).filter(k => k.startsWith('custom_') && !k.endsWith('_label') && !k.endsWith('_section'))
+    .forEach(k => rows.push({ key: k, label: data[k+'_label']||'Custom Row', custom: true }));
+
+  let tbody = '';
+  rows.forEach(r => {
+    if (r.section) {
+      tbody += `<tr class="se-section"><td colspan="3">📌 ${esc(r.label)}</td></tr>`;
+      return;
+    }
+    if (r.total) {
+      const val = (r.keys||[]).reduce((a,k)=>a+(+data[k]||0), 0);
+      tbody += `<tr class="se-total"><td colspan="2">${esc(r.label)}</td><td style="text-align:right;color:var(--teal);">${fmt(val)}</td></tr>`;
+      return;
+    }
+    tbody += `<tr>
+      <td><input class="se-label-input" data-labelkey="${r.key}" value="${esc(r.label)}" placeholder="Row label" oninput="markUnsaved()"></td>
+      <td style="text-align:right;">
+        <input class="se-input" type="number" data-key="${r.key}" value="${data[r.key]||''}" placeholder="0" oninput="updateStmtTotal();markUnsaved()">
+      </td>
+      <td style="text-align:center;width:36px;">${r.custom?`<button class="se-del-btn" onclick="deleteEditRow('${r.key}')">✕</button>`:''}
+      </td>
+    </tr>`;
+  });
+
+  ws.innerHTML = `
+    <div class="editor-workspace">
+      <div class="editor-topbar">
+        <div class="editor-topbar-title">📊 ${names[type]}</div>
+        <span id="edit-saved-tag" style="font-size:11px;color:rgba(255,255,255,0.4);">All changes auto-tracked</span>
+      </div>
+      <div class="editor-action-bar">
+        <button class="eabtn eabtn-green" onclick="saveStmtEditor('${type}','${clientId}')">💾 Save</button>
+        <button class="eabtn" onclick="addEditRow('${type}','${clientId}')">➕ Add Row</button>
+        <button class="eabtn" onclick="printEditStmt()">🖨 Print</button>
+        <button class="eabtn eabtn-amber" onclick="clearStmtEditor('${type}','${clientId}')">🗑 Clear All</button>
+      </div>
+      <div style="overflow:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 280px);">
+        <table class="stmt-editor-table" id="stmt-edit-table">
+          <thead><tr>
+            <th>Line Item</th>
+            <th style="text-align:right;">Amount (PKR)</th>
+            <th style="width:36px;"></th>
+          </tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+      <div style="padding:12px 14px;background:#f7f9fc;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">
+        💡 Tip: Edit labels and amounts directly. Tap ➕ to add custom rows. Changes save to this client's record.
+      </div>
+    </div>`;
+}
+
+function updateStmtTotal() {
+  // Live-update visible total rows
+  document.querySelectorAll('.se-total td:last-child').forEach(td => {
+    // simple sum of all number inputs
+    const total = Array.from(document.querySelectorAll('.se-input'))
+      .reduce((a, inp) => a + (+inp.value || 0), 0);
+  });
+}
+
+async function saveStmtEditor(type, clientId) {
+  const data = await loadData(`stmt:${clientId}:${type}`, {});
+  document.querySelectorAll('#stmt-edit-table input[data-key]').forEach(inp => {
+    data[inp.dataset.key] = inp.value;
+  });
+  document.querySelectorAll('#stmt-edit-table input[data-labelkey]').forEach(inp => {
+    data[inp.dataset.labelkey + '_label'] = inp.value;
+  });
+  await saveData(`stmt:${clientId}:${type}`, data);
+  // Track in stmts list
+  const stmts = await loadData(`stmts:${clientId}`, []);
+  if (!stmts.includes(type)) stmts.push(type);
+  await saveData(`stmts:${clientId}`, stmts);
+  await logActivity(`Statement edited & saved (${type})`);
+  markSaved();
+  showToast('✅ Statement saved successfully!');
+  // Flash save indicator
+  const tag = document.getElementById('edit-saved-tag');
+  if (tag) { tag.style.color = '#5DCAA5'; tag.textContent = '✅ Saved!'; setTimeout(() => { tag.style.color = 'rgba(255,255,255,0.4)'; tag.textContent = 'All changes auto-tracked'; }, 2000); }
+}
+
+async function addEditRow(type, clientId) {
+  const label = prompt('New row label (e.g. "Export Income"):');
+  if (!label) return;
+  const data = await loadData(`stmt:${clientId}:${type}`, {});
+  const k = 'custom_' + Date.now();
+  data[k] = 0; data[k+'_label'] = label; data[k+'_section'] = 'custom';
+  await saveData(`stmt:${clientId}:${type}`, data);
+  showToast('Row added!');
+  loadStmtEditor(type, clientId);
+}
+
+async function deleteEditRow(key) {
+  if (!confirm('Delete this row?')) return;
+  const type = _editType; const clientId = _editClientId;
+  const data = await loadData(`stmt:${clientId}:${type}`, {});
+  delete data[key]; delete data[key+'_label']; delete data[key+'_section'];
+  await saveData(`stmt:${clientId}:${type}`, data);
+  loadStmtEditor(type, clientId);
+}
+
+async function clearStmtEditor(type, clientId) {
+  if (!confirm('Clear all values? Labels will be kept.')) return;
+  const data = await loadData(`stmt:${clientId}:${type}`, {});
+  Object.keys(data).forEach(k => { if (!k.endsWith('_label') && !k.endsWith('_section')) data[k] = ''; });
+  await saveData(`stmt:${clientId}:${type}`, data);
+  loadStmtEditor(type, clientId);
+  showToast('Values cleared');
+}
+
+function printEditStmt() {
+  const table = document.getElementById('stmt-edit-table');
+  if (!table) return;
+  const w = window.open('', '_blank');
+  const clients = JSON.parse(localStorage.getItem(userKey('clients')) || '[]');
+  const client = clients.find(c => c.id === _editClientId);
+  const names = { income:'Income Statement', balance:'Balance Sheet', cashflow:'Cash Flow Statement' };
+  w.document.write(`<!DOCTYPE html><html><head><title>${names[_editType]||'Statement'}</title>
+    <style>body{font-family:Arial,sans-serif;padding:30px;font-size:13px;}
+    h2{color:#0f1e36;} h4{color:#555;font-weight:normal;margin-top:4px;}
+    table{width:100%;border-collapse:collapse;margin-top:20px;}
+    th,td{padding:9px 14px;border:1px solid #ddd;text-align:left;}
+    th{background:#0f1e36;color:#fff;} tr:nth-child(even)td{background:#f9f9f9;}
+    .se-section td{background:#e8edf2;font-weight:bold;text-transform:uppercase;font-size:11px;}
+    .se-total td{font-weight:bold;border-top:2px solid #333;background:#f5f5f5;color:#1D9E75;}
+    input{border:none;background:transparent;font-size:inherit;font-family:inherit;width:100%;text-align:inherit;}
+    @media print{button,input{pointer-events:none;}}
+    </style></head><body>
+    <h2>${names[_editType]||'Statement'}</h2>
+    <h4>${client?client.name:''} &nbsp;·&nbsp; ${document.getElementById('stmt-fy')?document.getElementById('stmt-fy').value:'FY 2024-25'}</h4>
+    ${table.outerHTML}
+    <p style="margin-top:20px;font-size:11px;color:#999;">Generated by LedgerPro · ${new Date().toLocaleDateString('en-PK')}</p>
+    <script>window.onload=function(){window.print()}<\/script></body></html>`);
+  w.document.close();
+}
+
+// ── EXCEL / FILE EDITOR ──
+async function loadFileEditor(docId) {
+  const docs = await loadData(`docs:${_editClientId}`, []);
+  const doc = docs.find(d => d.id === docId);
+  if (!doc || !doc.data) { showToast('File not found'); return; }
+  _editDocId = docId;
+  const ws = document.getElementById('edit-workspace');
+  const isXLS = doc.name.match(/\.(xlsx?|xls)$/i);
+  const isCSV = doc.name.match(/\.csv$/i);
+  const isTxt = doc.name.match(/\.txt$/i);
+
+  if (isXLS) {
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('XLSX not loaded');
+      const b64 = doc.data.split(',')[1];
+      _editXlsWb = XLSX.read(b64, { type: 'base64' });
+      const sheetNames = _editXlsWb.SheetNames;
+      _editCurrentSheet = sheetNames[0];
+      const tabsHtml = sheetNames.map((s,i) =>
+        `<button class="xls-stab${i===0?' active':''}" onclick="switchEditSheet(this,'${esc(s)}')">${esc(s)}</button>`
+      ).join('');
+      ws.innerHTML = `
+        <div class="editor-workspace">
+          <div class="editor-topbar">
+            <div class="editor-topbar-title">📗 ${esc(doc.name)}</div>
+          </div>
+          <div class="editor-action-bar">
+            <button class="eabtn eabtn-green" onclick="saveExcelEditor()">💾 Save Excel</button>
+            <button class="eabtn" onclick="addExcelRow()">➕ Row</button>
+            <button class="eabtn" onclick="addExcelCol()">➕ Col</button>
+            <button class="eabtn eabtn-blue" onclick="downloadEditedExcel()">⬇ Download</button>
+            <button class="eabtn eabtn-red" onclick="clearExcelCell()">✕ Clear Cell</button>
+          </div>
+          <div class="xls-sheet-tabs" id="edit-sheet-tabs">${tabsHtml}</div>
+          <div class="xls-editor-wrap" id="edit-xls-wrap" style="max-height:calc(100vh - 280px);"></div>
+          <div style="padding:10px 14px;background:#f7f9fc;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">
+            💡 Tap any cell to edit. Changes are saved back to the document.
+          </div>
+        </div>`;
+      renderExcelEditor(sheetNames[0]);
+    } catch(e) { ws.innerHTML = `<div class="empty-state" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:40px;"><div class="empty-icon">❌</div><p>Could not load Excel: ${e.message}</p></div>`; }
+
+  } else if (isCSV || isTxt) {
+    try {
+      const b64 = doc.data.split(',')[1];
+      const decoded = decodeURIComponent(escape(atob(b64)));
+      ws.innerHTML = `
+        <div class="editor-workspace">
+          <div class="editor-topbar">
+            <div class="editor-topbar-title">${isCSV?'📋':'📝'} ${esc(doc.name)}</div>
+          </div>
+          <div class="editor-action-bar">
+            <button class="eabtn eabtn-green" onclick="saveTextEditor('${docId}','${isCSV?'csv':'txt'}')">💾 Save</button>
+            <button class="eabtn" onclick="document.getElementById('text-edit-area').focus()">✏️ Edit</button>
+            <button class="eabtn eabtn-blue" onclick="downloadTextEditor('${docId}')">⬇ Download</button>
+            <button class="eabtn eabtn-red" onclick="if(confirm('Clear all content?'))document.getElementById('text-edit-area').value=''">🗑 Clear</button>
+          </div>
+          <textarea id="text-edit-area" class="text-edit-area" oninput="markUnsaved()" spellcheck="${isTxt}">${esc(decoded)}</textarea>
+          <div style="padding:10px 14px;background:#f7f9fc;border-top:1px solid var(--border);font-size:12px;color:var(--text3);">
+            💡 Edit text directly. Tap Save when done.
+          </div>
+        </div>`;
+    } catch(e) { showToast('Cannot read this file'); }
+  }
+}
+
+function renderExcelEditor(sheetName) {
+  if (!_editXlsWb) return;
+  _editCurrentSheet = sheetName;
+  const ws = _editXlsWb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+  if (!rows.length) { document.getElementById('edit-xls-wrap').innerHTML = '<div style="padding:24px;color:#888;text-align:center;">Empty sheet — add rows using ➕ Row button</div>'; return; }
+  const maxCols = Math.max(...rows.map(r=>r.length), 1);
+  // Column letters
+  const colLetters = Array.from({length:maxCols}, (_,i) => String.fromCharCode(65+i));
+  let html = `<table class="xls-editor-table" id="xls-edit-tbl">
+    <thead><tr><th class="xls-row-num">#</th>${colLetters.map(l=>`<th>${l}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach((row, ri) => {
+    html += `<tr><td class="xls-row-num">${ri+1}</td>`;
+    for (let ci = 0; ci < maxCols; ci++) {
+      const val = row[ci] !== undefined ? String(row[ci]) : '';
+      html += `<td><input class="xls-cell-inp" data-row="${ri}" data-col="${ci}" value="${esc(val)}" oninput="markUnsaved()" onfocus="this.parentElement.style.outline='2px solid var(--amber)'" onblur="this.parentElement.style.outline=''"></td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('edit-xls-wrap').innerHTML = html;
+}
+
+function switchEditSheet(btn, name) {
+  // First commit current sheet edits to wb
+  commitExcelEdits();
+  document.querySelectorAll('.xls-stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderExcelEditor(name);
+}
+
+function commitExcelEdits() {
+  if (!_editXlsWb || !_editCurrentSheet) return;
+  const ws = _editXlsWb.Sheets[_editCurrentSheet];
+  document.querySelectorAll('#xls-edit-tbl .xls-cell-inp').forEach(inp => {
+    const r = +inp.dataset.row, c = +inp.dataset.col;
+    const addr = XLSX.utils.encode_cell({r, c});
+    const val = inp.value;
+    const num = Number(val);
+    if (!isNaN(num) && val !== '') {
+      ws[addr] = { v: num, t: 'n' };
+    } else {
+      ws[addr] = { v: val, t: 's' };
+    }
+    if (!ws['!ref']) ws['!ref'] = addr;
+  });
+}
+
+async function saveExcelEditor() {
+  if (!_editXlsWb || !_editClientId || !_editDocId) { showToast('Nothing to save'); return; }
+  commitExcelEdits();
+  try {
+    const wbout = XLSX.write(_editXlsWb, { bookType:'xlsx', type:'base64' });
+    const newData = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
+    const docs = await loadData(`docs:${_editClientId}`, []);
+    const idx = docs.findIndex(d => d.id === _editDocId);
+    if (idx >= 0) { docs[idx].data = newData; await saveData(`docs:${_editClientId}`, docs); }
+    await logActivity('Excel document edited & saved');
+    markSaved();
+    showToast('✅ Excel saved!');
+  } catch(e) { showToast('❌ Save failed: ' + e.message); }
+}
+
+async function downloadEditedExcel() {
+  commitExcelEdits();
+  if (!_editXlsWb) return;
+  const wbout = XLSX.write(_editXlsWb, { bookType:'xlsx', type:'base64' });
+  const a = document.createElement('a');
+  a.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
+  const docs = await loadData(`docs:${_editClientId}`, []);
+  const doc = docs.find(d => d.id === _editDocId);
+  a.download = (doc ? doc.name.replace(/\.xlsx?$/i,'') : 'edited') + '_edited.xlsx';
+  a.click();
+}
+
+function addExcelRow() {
+  const tbody = document.querySelector('#xls-edit-tbl tbody');
+  if (!tbody) return;
+  const existingRows = tbody.querySelectorAll('tr');
+  const ri = existingRows.length;
+  const cols = document.querySelectorAll('#xls-edit-tbl thead th').length - 1;
+  let html = `<tr><td class="xls-row-num">${ri+1}</td>`;
+  for (let ci = 0; ci < cols; ci++) {
+    html += `<td><input class="xls-cell-inp" data-row="${ri}" data-col="${ci}" value="" oninput="markUnsaved()"></td>`;
+  }
+  html += '</tr>';
+  tbody.insertAdjacentHTML('beforeend', html);
+  markUnsaved();
+  showToast('Row added');
+}
+
+function addExcelCol() {
+  const thead = document.querySelector('#xls-edit-tbl thead tr');
+  const tbody = document.querySelector('#xls-edit-tbl tbody');
+  if (!thead || !tbody) return;
+  const colCount = thead.querySelectorAll('th').length - 1;
+  const letter = String.fromCharCode(65 + colCount);
+  thead.insertAdjacentHTML('beforeend', `<th>${letter}</th>`);
+  tbody.querySelectorAll('tr').forEach((tr, ri) => {
+    tr.insertAdjacentHTML('beforeend', `<td><input class="xls-cell-inp" data-row="${ri}" data-col="${colCount}" value="" oninput="markUnsaved()"></td>`);
+  });
+  markUnsaved();
+  showToast('Column added');
+}
+
+function clearExcelCell() {
+  const focused = document.querySelector('#xls-edit-tbl .xls-cell-inp:focus');
+  if (focused) { focused.value = ''; markUnsaved(); showToast('Cell cleared'); }
+  else showToast('Tap a cell first, then Clear');
+}
+
+async function saveTextEditor(docId, ext) {
+  const area = document.getElementById('text-edit-area');
+  if (!area || !_editClientId) return;
+  const text = area.value;
+  const encoded = btoa(unescape(encodeURIComponent(text)));
+  const mime = ext === 'csv' ? 'text/csv' : 'text/plain';
+  const newData = `data:${mime};base64,${encoded}`;
+  const docs = await loadData(`docs:${_editClientId}`, []);
+  const idx = docs.findIndex(d => d.id === docId);
+  if (idx >= 0) { docs[idx].data = newData; await saveData(`docs:${_editClientId}`, docs); }
+  await logActivity('Text file edited & saved');
+  markSaved();
+  showToast('✅ File saved!');
+}
+
+async function downloadTextEditor(docId) {
+  const area = document.getElementById('text-edit-area');
+  if (!area) return;
+  const docs = await loadData(`docs:${_editClientId}`, []);
+  const doc = docs.find(d => d.id === docId);
+  const text = area.value;
+  const encoded = btoa(unescape(encodeURIComponent(text)));
+  const mime = doc && doc.name.endsWith('.csv') ? 'text/csv' : 'text/plain';
+  const a = document.createElement('a');
+  a.href = `data:${mime};base64,${encoded}`;
+  a.download = doc ? doc.name : 'edited.txt';
+  a.click();
+}
+
+// Load client list when edit page opens
+const _origMobileNav = mobileNav;
+mobileNav = function(page, btn) {
+  _origMobileNav(page, btn);
+  if (page === 'edit') populateEditClientSelect();
+};
+
 // ── INIT ──
 window.addEventListener('load', async () => {
   // Check for existing session
@@ -2151,6 +3208,7 @@ window.addEventListener('load', async () => {
       <button class="vbtn vbtn-ghost" style="padding:5px 10px;" onclick="zoomViewer(0.15)">+</button>
     </div>
     <div class="viewer-actions">
+      <button class="vbtn vbtn-ghost" id="viewer-edit-btn" onclick="toggleDocEdit()">✏️ Edit</button>
       <button class="vbtn vbtn-primary" id="viewer-dl-btn" onclick="downloadCurrentDoc()">⬇ Download</button>
       <button class="vbtn vbtn-ghost" onclick="closeDocViewer()">✕ Close</button>
     </div>
@@ -2164,6 +3222,6 @@ window.addEventListener('load', async () => {
 </div>
 
 <!-- Hidden real file input -->
-<input type="file" id="real-file-input" multiple accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display:none" onchange="handleFileUpload(this)">
+<input type="file" id="real-file-input" multiple accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.txt,.png,.jpg,.jpeg,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="handleFileUpload(this)">
 </body>
 </html>
